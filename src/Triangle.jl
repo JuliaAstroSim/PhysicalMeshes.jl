@@ -1,10 +1,10 @@
-struct Triangle2D{T<:Union{Number, Quantity}} <: AbstractTriangle2D{T}
+struct Triangle2D{T<:Number} <: AbstractTriangle2D{T}
     a::PVector2D{T}
     b::PVector2D{T}
     c::PVector2D{T}
 end
 
-struct Triangle3D{T<:Union{Number, Quantity}} <: AbstractTriangle3D{T}
+struct Triangle3D{T<:Number} <: AbstractTriangle3D{T}
     a::PVector{T}
     b::PVector{T}
     c::PVector{T}

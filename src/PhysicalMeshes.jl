@@ -55,6 +55,7 @@ abstract type AbstractMesh3D{T} <: AbstractMesh{T} end
 @inline real(p::T) where T <: AbstractMesh = p
 
 
+include("Traits.jl")
 include("Line.jl")
 include("Triangle.jl")
 include("Tetrahedron.jl")

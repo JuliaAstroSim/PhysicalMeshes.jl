@@ -75,9 +75,9 @@ version = "0.2.0"
 
 [[PhysicalParticles]]
 deps = ["DocStringExtensions", "LinearAlgebra", "NearestNeighbors", "PhysicalConstants", "Statistics", "Test", "Unitful", "UnitfulAstro"]
-git-tree-sha1 = "a7ea9771134114c872fdfdf4a513a362f522304f"
+git-tree-sha1 = "ad3de39b2638ba9200da5072d83dec94e665fd3a"
 uuid = "78724250-4eb2-11e9-0f34-13a7aab864c5"
-version = "1.0.0"
+version = "1.0.1"
 
 [[Pkg]]
 deps = ["Dates", "LibGit2", "Libdl", "Logging", "Markdown", "Printf", "REPL", "Random", "SHA", "UUIDs"]
