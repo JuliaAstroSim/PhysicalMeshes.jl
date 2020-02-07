@@ -12,10 +12,13 @@ export
     show, real, length, iterate,
 
     # Line
-    AbstractLine, AbstractLine2D, AbstractLine3D,
+    Line, Line2D,
     
+    # Cube
+    Cube, Cube2D,
+
     # Triangle
-    AbstractTriangle, AbstractTriangle2D, AbstractTriangle3D,
+    Triangle, Triangle2D,
 
     # Tetrahedron
 
@@ -67,7 +70,7 @@ include("Cube.jl")
 include("Triangle.jl")
 include("Tetrahedron.jl")
 
-include("Voronoi/Voronoi.jl")
+include("FVM/Voronoi.jl")
 
 include("PrettyPrinting.jl")
 
