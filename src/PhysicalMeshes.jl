@@ -36,6 +36,11 @@ abstract type AbstractLine3D{T} <: AbstractLine{T} end
 
 @inline real(p::T) where T <: AbstractLine = p
 
+abstract type AbstractCube{T} end
+abstract type AbstractCube2D{T} <: AbstractCube{T} end
+abstract type AbstractCube3D{T} <: AbstractCube{T} end
+
+@inline real(p::T) where T <: AbstractCube = p
 
 abstract type AbstractTriangle{T} end
 abstract type AbstractTriangle2D{T} <: AbstractTriangle{T} end
@@ -58,6 +63,7 @@ abstract type AbstractMesh3D{T} <: AbstractMesh{T} end
 
 include("Traits.jl")
 include("Line.jl")
+include("Cube.jl")
 include("Triangle.jl")
 include("Tetrahedron.jl")
 
