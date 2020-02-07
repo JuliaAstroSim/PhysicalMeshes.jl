@@ -1,3 +1,8 @@
+name = "PhysicalMeshes"
+uuid = "97d9904f-034f-4fb7-aeaa-03a173434233"
+authors = ["islent <leoislent@gmail.com>"]
+version = "0.1.0"
+
 [deps]
 Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 PhysicalParticles = "78724250-4eb2-11e9-0f34-13a7aab864c5"

@@ -14,11 +14,6 @@ meshtype(::AbstractPoint3D, ::Quantity) = Physical3D()
 
 meshtype(a::Array) = meshtype(a[1])
 
-function meshtype(data::Dict)
-    for v in values(data)
-        if length(v) > 0
-            return meshtype(p)            
-        end
-    end
-    error("Empty data!")
-end
+abstract type AbstractOrientation end
+struct PositivelyOriented <: AbstractOrientation end
+struct NegativelyOriented <: AbstractOrientation end

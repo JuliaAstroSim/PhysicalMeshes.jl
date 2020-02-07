@@ -26,6 +26,7 @@ export
     orientation,
     volume,
     area,
+    centroid,
     len # Circumference
 
 
