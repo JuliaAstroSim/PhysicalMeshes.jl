@@ -3,7 +3,7 @@ using Unitful, UnitfulAstro
 
 using PhysicalParticles
 using PhysicalMeshes
-
+import PhysicalMeshes: Unitless2D, Unitless3D, Physical2D, Physical3D
 
 
 include("testLine.jl")

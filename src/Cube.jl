@@ -12,12 +12,12 @@ Cube(top::PVector2D{T}, below::PVector2D{T}) where T<:Number = Cube2D(top, below
 
 #! Area and Volume is signed
 
-function area(c::Cube2D)
+function area(c::AbstractCube2D)
     p = c.top - c.below
     return p.x * p.y
 end
 
-function volume(c::Cube)
+function volume(c::AbstractCube3D)
     p = c.top - c.below
     return p.x * p.y * p.z
 end
