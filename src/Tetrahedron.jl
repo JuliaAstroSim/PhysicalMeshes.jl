@@ -5,3 +5,5 @@ struct Tetrahedron{T<:Number} <: AbstractTetrahedron{T}
     d::PVector{T}
 end
 
+function insphere()
+end

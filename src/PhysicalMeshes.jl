@@ -2,6 +2,9 @@ module PhysicalMeshes
 
 using Unitful, UnitfulAstro
 using Distributed
+using LinearAlgebra
+using StaticArrays
+using Decimals
 
 using PhysicalParticles
 
@@ -12,6 +15,28 @@ export
     # Base
     +, -, *, /,
     show, real, length, iterate,
+
+    # Traits
+    PositivelyOriented,
+    NegativelyOriented,
+    UnOriented,
+
+    Fast,
+    Exact,
+
+    Inner,
+    Outter,
+    OnEdge,
+    OnFace,
+
+    # Core
+    orient,
+    orientation,
+
+    circumcenter,
+
+    incircle,
+    insphere,
 
     # Line
     Line, Line2D,
@@ -26,8 +51,6 @@ export
 
     
     # Mesh
-    orientation,
-
     centroid, center, midpoint,
 
     volume,
@@ -59,8 +82,12 @@ abstract type AbstractMesh{T} <: AbstractGeometryType{T} end
 abstract type AbstractMesh2D{T} <: AbstractMesh{T} end
 abstract type AbstractMesh3D{T} <: AbstractMesh{T} end
 
-
 include("Traits.jl")
+
+include("core/orient.jl")
+include("core/circumcenter.jl")
+include("core/predicates.jl")
+
 include("Line.jl")
 include("Cube.jl")
 include("Triangle.jl")

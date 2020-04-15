@@ -14,10 +14,29 @@ end
 
 len(t::AbstractTriangle) = norm(t.a - t.b) + norm(t.a - t.c) + norm(t.b - t.c)
 
-#orientation(t::AbstractTriangle) = 
+orient(t::AbstractTriangle) = orient(t.a, t.b, t.c)
 
-#orthocenter(t::AbstractTriangle) = 
+area(t::AbstractTriangle2D) = 0.5 * abs(getz(orient(t)))
 
-centroid(t::AbstractTriangle) = mean([t.a, t.b, t.c])
+area(t::AbstractTriangle3D) = 0.5 * norm(orient(t))
 
-#area(t::AbstractTriangle) = 
+orientation(t::AbstractTriangle2D) = ustrip(getz(orient(t))) >= 0 ? PositivelyOriented() : NegativelyOriented()
+
+
+
+centroid(t::AbstractTriangle) = (t.a + t.b + t.c) / 3.0
+
+### Refer to Meshkit project
+
+circumcenter(t::AbstractTriangle) = circumcenter(t.a, t.b, t.c)
+
+#circumcenter_exact(t::AbstractTriangle2D)
+
+#circumcenter_exact(t::AbstractTriangle3D)
+
+
+incircle(t::AbstractTriangle2D, p::AbstractPoint2D) = incircle(t.a, t.b, t.c, p)
+
+#incircle_exact()
+
+#incircle_exact()

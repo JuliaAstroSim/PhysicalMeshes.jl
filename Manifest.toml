@@ -12,6 +12,11 @@ version = "1.0.0"
 deps = ["Printf"]
 uuid = "ade2ca70-3891-5945-98fb-dc099432e06a"
 
+[[Decimals]]
+git-tree-sha1 = "e98abef36d02a0ec385d68cd7dadbce9b28cbd88"
+uuid = "abce61dc-4473-55a0-ba07-351d65e31d42"
+version = "0.4.1"
+
 [[Distances]]
 deps = ["LinearAlgebra", "Statistics"]
 git-tree-sha1 = "23717536c81b63e250f682b0e0933769eecd1411"
@@ -33,6 +38,7 @@ deps = ["Markdown"]
 uuid = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
 
 [[LibGit2]]
+deps = ["Printf"]
 uuid = "76f85450-5226-5b5a-8eaa-529ad045b433"
 
 [[Libdl]]
@@ -57,7 +63,7 @@ version = "0.4.4"
 
 [[PhysicalParticles]]
 deps = ["DocStringExtensions", "LinearAlgebra", "NearestNeighbors", "Statistics", "Test", "Unitful", "UnitfulAstro"]
-git-tree-sha1 = "a0c77b2bf4d75fcc613c8cfee3ef081614d82740"
+git-tree-sha1 = "2717fdfa80f1d2a10e3d320527dcc57a8e9978f2"
 repo-rev = "master"
 repo-url = "https://github.com/JuliaAstroSim/PhysicalParticles.jl"
 uuid = "78724250-4eb2-11e9-0f34-13a7aab864c5"
@@ -115,9 +121,9 @@ uuid = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
 
 [[Unitful]]
 deps = ["ConstructionBase", "LinearAlgebra", "Random"]
-git-tree-sha1 = "0b95bcc0745541528ff3a95b722367e6cc12f43e"
+git-tree-sha1 = "dedf025ae6429de95d0d0f8622ad08e5b63a312e"
 uuid = "1986cc42-f94f-5a68-af5c-568840ba703d"
-version = "1.0.0"
+version = "1.1.0"
 
 [[UnitfulAngles]]
 deps = ["Dates", "Unitful"]
