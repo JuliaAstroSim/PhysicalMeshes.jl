@@ -11,6 +11,7 @@
         @test circumcenter(t) == PVector2D(2.0, 1.5)
 
         @test incircle(t, PVector2D(3.0, 2.0)) == Inner()
+        @test incircle(t, PVector2D()) == OnEdge()
         @test incircle(t, PVector2D(6.0, 0.0)) == Outter()
     end
 

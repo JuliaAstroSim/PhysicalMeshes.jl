@@ -42,14 +42,14 @@ function orient(a::AbstractPoint3D, b::AbstractPoint3D, c::AbstractPoint3D, d::A
     The result is also a rough approximation of six times the signed volume.
 """
 function orient(a::AbstractPoint3D, b::AbstractPoint3D, c::AbstractPoint3D, d::AbstractPoint3D)
-    adx = a.x - d.x
-    bdx = b.x - d.x
-    cdx = c.x - d.x
-    ady = a.y - d.y
-    bdy = b.y - d.y
-    cdy = c.y - d.y
-    adz = a.z - d.z
-    bdz = b.z - d.z
-    cdz = c.z - d.z
-    return adx * (bdy * cdz - bdz * cdy) + bdx * (cdy * adz - cdz * ady) + cdx * (ady * bdz - adz * bdy)
+    ax = a.x - d.x
+    bx = b.x - d.x
+    cx = c.x - d.x
+    ay = a.y - d.y
+    by = b.y - d.y
+    cy = c.y - d.y
+    az = a.z - d.z
+    bz = b.z - d.z
+    cz = c.z - d.z
+    return ax * (bz * cy - by * cz) + bx * (cz * ay - cy * az) + cx * (az * by - ay * bz)
 end

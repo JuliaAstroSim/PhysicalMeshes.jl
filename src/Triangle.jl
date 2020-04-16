@@ -20,10 +20,6 @@ area(t::AbstractTriangle2D) = 0.5 * abs(getz(orient(t)))
 
 area(t::AbstractTriangle3D) = 0.5 * norm(orient(t))
 
-orientation(t::AbstractTriangle2D) = ustrip(getz(orient(t))) >= 0 ? PositivelyOriented() : NegativelyOriented()
-
-
-
 centroid(t::AbstractTriangle) = (t.a + t.b + t.c) / 3.0
 
 ### Refer to Meshkit project
@@ -40,3 +36,14 @@ incircle(t::AbstractTriangle2D, p::AbstractPoint2D) = incircle(t.a, t.b, t.c, p)
 #incircle_exact()
 
 #incircle_exact()
+
+
+function orientation(t::AbstractTriangle2D)
+    x = ustrip(getz(orient(t)))
+    if x < 0
+        return NegativelyOriented()
+    elseif x > 0
+        return PositivelyOriented()
+    end
+    return UnOriented()
+end

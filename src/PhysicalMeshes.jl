@@ -48,7 +48,7 @@ export
     Triangle, Triangle2D,
 
     # Tetrahedron
-
+    Tetrahedron,
     
     # Mesh
     centroid, center, midpoint,
