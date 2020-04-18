@@ -36,6 +36,10 @@ function circumcenter(a::AbstractPoint3D, b::AbstractPoint3D, c::AbstractPoint3D
     )   
 end
 
+function circumcenter_exact(a::AbstractPoint, b::AbstractPoint, c::AbstractPoint)
+    return number(circumcenter(decimal(a), decimal(b), decimal(c)))
+end
+
 function circumcenter(a::AbstractPoint3D, b::AbstractPoint3D, c::AbstractPoint3D, d::AbstractPoint3D)
     xba = b.x - a.x
     yba = b.y - a.y
@@ -64,4 +68,8 @@ function circumcenter(a::AbstractPoint3D, b::AbstractPoint3D, c::AbstractPoint3D
         a.y + (balength * ycrosscd + calength * ycrossdb + dalength * ycrossbc) * denominator,
         a.z + (balength * zcrosscd + calength * zcrossdb + dalength * zcrossbc) * denominator
     )
+end
+
+function circumcenter_exact(a::AbstractPoint3D, b::AbstractPoint3D, c::AbstractPoint3D, d::AbstractPoint3D)
+    return number(circumcenter(decimal(a), decimal(b), decimal(c), decimal(d)))
 end

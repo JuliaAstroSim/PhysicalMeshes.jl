@@ -11,3 +11,8 @@ include("testTriangle.jl")
 include("testCube.jl")
 include("testMesh.jl")
 include("testTetrahedron.jl")
+
+#=
+include("PhysicalMeshes.jl\\src\\PhysicalMeshes.jl"); using Main.PhysicalMeshes, Unitful, PhysicalParticles
+
+=#

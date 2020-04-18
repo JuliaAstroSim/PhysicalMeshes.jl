@@ -9,7 +9,8 @@ using Decimals
 using PhysicalParticles
 
 import Base: +, -, *, /, show, real, length, iterate
-import Unitful: Units
+import Unitful: Units, FloatTypes
+import Decimals: decimal, number
 
 export
     # Base
@@ -34,9 +35,15 @@ export
     orientation,
 
     circumcenter,
+    circumcenter_exact,
 
     incircle,
+    incircle_exact,
     insphere,
+    insphere_exact,
+
+    decimal,
+    number,
 
     # Line
     Line, Line2D,
@@ -84,6 +91,7 @@ abstract type AbstractMesh3D{T} <: AbstractMesh{T} end
 
 include("Traits.jl")
 
+include("core/decimals.jl")
 include("core/orient.jl")
 include("core/circumcenter.jl")
 include("core/predicates.jl")
