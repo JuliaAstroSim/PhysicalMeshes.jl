@@ -8,9 +8,11 @@ using Decimals
 
 using PhysicalParticles
 
+import Core: Number
 import Base: +, -, *, /, show, real, length, iterate
 import Unitful: Units, FloatTypes
-import Decimals: decimal, number
+import Decimals: Decimal, decimal, number
+import PhysicalParticles: PVector2D, PVector
 
 export
     # Base
