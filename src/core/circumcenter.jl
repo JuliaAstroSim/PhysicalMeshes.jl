@@ -37,7 +37,7 @@ function circumcenter(a::AbstractPoint3D, b::AbstractPoint3D, c::AbstractPoint3D
 end
 
 function circumcenter_exact(a::AbstractPoint, b::AbstractPoint, c::AbstractPoint)
-    return number(circumcenter(decimal(a), decimal(b), decimal(c)))
+    return floatnumber(circumcenter(decimal(a), decimal(b), decimal(c)))
 end
 
 function circumcenter(a::AbstractPoint3D, b::AbstractPoint3D, c::AbstractPoint3D, d::AbstractPoint3D)
@@ -71,5 +71,5 @@ function circumcenter(a::AbstractPoint3D, b::AbstractPoint3D, c::AbstractPoint3D
 end
 
 function circumcenter_exact(a::AbstractPoint3D, b::AbstractPoint3D, c::AbstractPoint3D, d::AbstractPoint3D)
-    return number(circumcenter(decimal(a), decimal(b), decimal(c), decimal(d)))
+    return floatnumber(circumcenter(decimal(a), decimal(b), decimal(c), decimal(d)))
 end

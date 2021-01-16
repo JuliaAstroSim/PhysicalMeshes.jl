@@ -11,7 +11,7 @@ using PhysicalParticles
 import Core: Number
 import Base: +, -, *, /, show, real, length, iterate
 import Unitful: Units, FloatTypes
-import Decimals: Decimal, decimal, number
+import Decimals: Decimal, decimal
 import PhysicalParticles: PVector2D, PVector
 
 export
@@ -45,7 +45,7 @@ export
     insphere_exact,
 
     decimal,
-    number,
+    floatnumber,
 
     # Line
     Line, Line2D,

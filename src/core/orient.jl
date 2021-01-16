@@ -20,7 +20,7 @@ function orient(a::AbstractPoint2D, b::AbstractPoint2D, c::AbstractPoint2D)
 end
 
 function orient_exact(a::AbstractPoint2D, b::AbstractPoint2D, c::AbstractPoint2D)
-    z = number(orient_kernel(decimal(a), decimal(b), decimal(c)))
+    z = floatnumber(orient_kernel(decimal(a), decimal(b), decimal(c)))
     return PVector(zero(z), zero(z), z)
 end
 
@@ -54,7 +54,7 @@ function orient_exact(a::AbstractPoint3D, b::AbstractPoint3D, c::AbstractPoint3D
     bcy = eb.y - ec.y
     acz = ea.z - ec.z
     bcz = eb.z - ec.z
-    return number(PVector(
+    return floatnumber(PVector(
         acy * bcz - acz * bcy,
         acx * bcz - acz * bcx,
         acx * bcy - acy * bcx
