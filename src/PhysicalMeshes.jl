@@ -5,6 +5,7 @@ using Distributed
 using LinearAlgebra
 using StaticArrays
 using Decimals
+using StructArrays
 
 using PhysicalParticles
 
