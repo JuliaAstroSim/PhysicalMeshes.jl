@@ -27,7 +27,7 @@ function incircle(a::AbstractPoint2D, b::AbstractPoint2D, c::AbstractPoint2D, d:
 
     return OnEdge()
 end
-
+#=
 function insphere_exact(a::AbstractPoint2D, b::AbstractPoint2D, c::AbstractPoint2D, d::AbstractPoint2D)
     result = ustrip(floatnumber(incircle_kernel(decimal(a), decimal(b), decimal(c), decimal(d))))
 
@@ -38,7 +38,7 @@ function insphere_exact(a::AbstractPoint2D, b::AbstractPoint2D, c::AbstractPoint
     end
 
     return OnEdge()
-end
+end=#
 
 function insphere_kernel(a::AbstractPoint3D, b::AbstractPoint3D, c::AbstractPoint3D, d::AbstractPoint3D, e::AbstractPoint3D)
     aex = a.x - e.x
@@ -86,7 +86,7 @@ function insphere(a::AbstractPoint3D, b::AbstractPoint3D, c::AbstractPoint3D, d:
 
     return OnEdge()
 end
-
+#=
 function insphere_exact(a::AbstractPoint3D, b::AbstractPoint3D, c::AbstractPoint3D, d::AbstractPoint3D, e::AbstractPoint3D)
     result = ustrip(floatnumber(insphere_kernel(decimal(a), decimal(b), decimal(c), decimal(d), decimal(e))))
 
@@ -97,4 +97,4 @@ function insphere_exact(a::AbstractPoint3D, b::AbstractPoint3D, c::AbstractPoint
     end
 
     return OnEdge()
-end
+end=#

@@ -1,19 +1,20 @@
 module PhysicalMeshes
 
+using Reexport
 using Unitful, UnitfulAstro
 using Distributed
 using LinearAlgebra
 using StaticArrays
-using Decimals
+#using Decimals
 using StructArrays
 
-using PhysicalParticles
+@reexport using PhysicalParticles
 
 import Core: Number
 import Base: +, -, *, /, show, real, length, iterate
 import Unitful: Units, FloatTypes
-import Decimals: Decimal, decimal
-import PhysicalParticles: PVector2D, PVector
+#import Decimals: Decimal, decimal
+import PhysicalParticles: PVector2D, PVector, area, volume
 
 export
     # Base
@@ -38,15 +39,15 @@ export
     orientation,
 
     circumcenter,
-    circumcenter_exact,
+    #circumcenter_exact,
 
     incircle,
-    incircle_exact,
+    #incircle_exact,
     insphere,
-    insphere_exact,
+    #insphere_exact,
 
-    decimal,
-    floatnumber,
+    #decimal,
+    #floatnumber,
 
     # Line
     Line, Line2D,
@@ -94,7 +95,7 @@ abstract type AbstractMesh3D{T} <: AbstractMesh{T} end
 
 include("Traits.jl")
 
-include("core/decimals.jl")
+#include("core/decimals.jl")
 include("core/orient.jl")
 include("core/circumcenter.jl")
 include("core/predicates.jl")

@@ -18,11 +18,11 @@ function orient(a::AbstractPoint2D, b::AbstractPoint2D, c::AbstractPoint2D)
     z = orient_kernel(a, b, c)
     return PVector(zero(z), zero(z), z)
 end
-
+#=
 function orient_exact(a::AbstractPoint2D, b::AbstractPoint2D, c::AbstractPoint2D)
     z = floatnumber(orient_kernel(decimal(a), decimal(b), decimal(c)))
     return PVector(zero(z), zero(z), z)
-end
+end=#
 
 """
 function orient(a::AbstractPoint3D, b::AbstractPoint3D, c::AbstractPoint3D)
@@ -43,7 +43,7 @@ function orient(a::AbstractPoint3D, b::AbstractPoint3D, c::AbstractPoint3D)
         acx * bcy - acy * bcx
     )
 end
-
+#=
 function orient_exact(a::AbstractPoint3D, b::AbstractPoint3D, c::AbstractPoint3D)
     ea = decimal(a)
     eb = decimal(b)
@@ -60,7 +60,7 @@ function orient_exact(a::AbstractPoint3D, b::AbstractPoint3D, c::AbstractPoint3D
         acx * bcy - acy * bcx
     ))
 end
-
+=#
 function orient_kernel(a::AbstractPoint3D, b::AbstractPoint3D, c::AbstractPoint3D, d::AbstractPoint3D)
     ax = a.x - d.x
     bx = b.x - d.x
@@ -83,7 +83,7 @@ function orient(a::AbstractPoint3D, b::AbstractPoint3D, c::AbstractPoint3D, d::A
 function orient(a::AbstractPoint3D, b::AbstractPoint3D, c::AbstractPoint3D, d::AbstractPoint3D)
     return orient_kernel(a, b, c, d)
 end
-
+#=
 function orient_exact(a::AbstractPoint3D, b::AbstractPoint3D, c::AbstractPoint3D, d::AbstractPoint3D)
     return orient_kernel(decimal(a), decimal(b), decimal(c), decimal(d))
-end
+end=#
