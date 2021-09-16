@@ -26,6 +26,13 @@ export
     NegativelyOriented,
     UnOriented,
 
+    Fast, Exact,
+
+    Inner, Outer,
+    OnEdge, OnFace,
+
+    CellMode, VertexMode,
+
     Fast,
     Exact,
 
@@ -63,6 +70,9 @@ export
     
     # Mesh
     centroid, center, midpoint,
+
+    MeshConfig,
+    MeshCartesianStatic,
 
     volume,
     area,
@@ -104,6 +114,8 @@ include("Line.jl")
 include("Cube.jl")
 include("Triangle.jl")
 include("Tetrahedron.jl")
+
+include("Mesh.jl")
 
 include("PrettyPrinting.jl")
 

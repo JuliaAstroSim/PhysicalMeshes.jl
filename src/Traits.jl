@@ -12,3 +12,7 @@ struct Inner <: AbstractPredicate end
 struct Outter <: AbstractPredicate end
 struct OnEdge <: AbstractPredicate end
 struct OnFace <: AbstractPredicate end
+
+abstract type MeshMode end
+struct CellMode <: MeshMode end
+struct VertexMode <: MeshMode end
