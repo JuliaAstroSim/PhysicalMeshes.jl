@@ -33,6 +33,8 @@ export
 
     CellMode, VertexMode,
 
+    NGP, CIC, TSC,
+
     Fast,
     Exact,
 
@@ -57,12 +59,18 @@ export
     #floatnumber,
 
     # Line
+    AbstractLine,
+    AbstractLine2D, AbstractLine3D,
     Line, Line2D,
     
     # Cube
+    AbstractCube,
+    AbstractCube2D, AbstractCube3D,
     Cube, Cube2D,
 
     # Triangle
+    AbstractTriangle,
+    AbstractTriangle2D, AbstractTriangle3D,
     Triangle, Triangle2D,
 
     # Tetrahedron
@@ -71,6 +79,8 @@ export
     # Mesh
     centroid, center, midpoint,
 
+    AbstractMesh,
+    AbstractMesh3D, AbstractMesh2D, AbstractMesh1D,
     MeshConfig,
     MeshCartesianStatic,
 
@@ -100,6 +110,7 @@ abstract type AbstractTriangle3D{T} <: AbstractTriangle{T} end
 abstract type AbstractTetrahedron{T} <: AbstractGeometryType{T} end
 
 abstract type AbstractMesh{T} <: AbstractGeometryType{T} end
+abstract type AbstractMesh1D{T} <: AbstractMesh{T} end
 abstract type AbstractMesh2D{T} <: AbstractMesh{T} end
 abstract type AbstractMesh3D{T} <: AbstractMesh{T} end
 
@@ -115,7 +126,8 @@ include("Cube.jl")
 include("Triangle.jl")
 include("Tetrahedron.jl")
 
-include("Mesh.jl")
+include("mesh/Mesh.jl")
+include("mesh/particle2mesh.jl")
 
 include("PrettyPrinting.jl")
 

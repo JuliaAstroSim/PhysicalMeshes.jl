@@ -60,7 +60,7 @@ end
 
 function MeshCartesianStatic(mode::VertexMode, units = nothing;
         config = MeshConfig(units; mode),
-    )
+    ) <: AbstractMesh3D
     x = collect(config.xMin:config.Δx:config.xMax)
     y = collect(config.yMin:config.Δy:config.yMax)
     z = collect(config.zMin:config.Δz:config.zMax)
