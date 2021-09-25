@@ -18,6 +18,14 @@ function particle2mesh(mesh::AbstractMesh3D, ::TSC)
     
 end
 
+function assignmesh(particles::StructArray, mesh::MeshCartesianStatic, ::NGP)
+    
+end
+
+function assignmesh(particles::StructArray, mesh::MeshCartesianStatic, ::CIC)
+    
+end
+
 function mesh2particle()
     
 end

@@ -6,8 +6,9 @@
   - `VertexMode`: properties are located on grid points. `(Nx + 1) × (Ny + 1) × (Nz + 1)` data points in total.
 - `Nx`, `Ny`, `Nz`: number of cells. In `VertexMode`, there are N+1 vertices in each direction
 """
-struct MeshConfig{I,LEN, MODE}
-    mode::MODE
+struct MeshConfig{I,LEN}
+    mode::MeshMode
+    assignment::MeshAssignment
     Nx::I
     Ny::I
     Nz::I
@@ -24,31 +25,54 @@ struct MeshConfig{I,LEN, MODE}
 end
 
 function MeshConfig(units = nothing;
-        mode = VertexMode(),
-        Nx = 10,
-        Ny = 10,
-        Nz = 10,
-        xMin = isnothing(units) ? -1.0 : -1.0 * units[1],
-        xMax = isnothing(units) ? +1.0 : +1.0 * units[1],
-        yMin = isnothing(units) ? -1.0 : -1.0 * units[1],
-        yMax = isnothing(units) ? +1.0 : +1.0 * units[1],
-        zMin = isnothing(units) ? -1.0 : -1.0 * units[1],
-        zMax = isnothing(units) ? +1.0 : +1.0 * units[1],
-    )
-        Δx = (xMax-xMin)/Nx
-        Δy = (yMax-yMin)/Ny
-        Δz = (zMax-zMin)/Nz
-    return MeshConfig(mode,Nx,Ny,Nz,xMin,xMax,yMin,yMax,zMin,zMax,Δx,Δy,Δz)
+    mode = VertexMode(),
+    assignment = CIC(),
+    Nx = 10,
+    Ny = 10,
+    Nz = 10,
+    xMin = isnothing(units) ? -1.0 : -1.0 * units[1],
+    xMax = isnothing(units) ? +1.0 : +1.0 * units[1],
+    yMin = isnothing(units) ? -1.0 : -1.0 * units[1],
+    yMax = isnothing(units) ? +1.0 : +1.0 * units[1],
+    zMin = isnothing(units) ? -1.0 : -1.0 * units[1],
+    zMax = isnothing(units) ? +1.0 : +1.0 * units[1],
+)
+    Δx = (xMax-xMin)/Nx
+    Δy = (yMax-yMin)/Ny
+    Δz = (zMax-zMin)/Nz
+    return MeshConfig(mode,assignment,Nx,Ny,Nz,xMin,xMax,yMin,yMax,zMin,zMax,Δx,Δy,Δz)
 end
 
-struct MeshCartesianStatic{I, LEN, POS, VEL, ACC, E, RHO, PHI, _U, _F, _G, _H, _J}
+function MeshConfig(e::Extent, units = nothing;
+    mode = VertexMode(),
+    assignment = CIC(),
+    Nx = 10,
+    Ny = 10,
+    Nz = 10,
+)
+    xMin = e.xMin
+    yMin = e.yMin
+    zMin = e.zMin
+    xMax = e.xMax
+    yMax = e.yMax
+    zMax = e.zMax
+    Δx = (xMax-xMin)/Nx
+    Δy = (yMax-yMin)/Ny
+    Δz = (zMax-zMin)/Nz
+    return MeshConfig(mode,assignment,Nx,Ny,Nz,xMin,xMax,yMin,yMax,zMin,zMax,Δx,Δy,Δz)
+end
+
+struct MeshCartesianStatic{I, LEN, POS, VEL, ACC, _e, RHO, PHI, _B, _E, _U, _F, _G, _H, _J}
     config::MeshConfig{I, LEN}
     pos::POS
     vel::VEL
     acc::ACC
-    e::E        # energy
+    e::_e        # energy
     rho::RHO    # density
     phi::PHI    # potential
+
+    B::_B       # magnetic field
+    E::_E       # eletric field
 
     # CFD
     U::_U
@@ -58,9 +82,7 @@ struct MeshCartesianStatic{I, LEN, POS, VEL, ACC, E, RHO, PHI, _U, _F, _G, _H, _
     J::_J
 end
 
-function MeshCartesianStatic(mode::VertexMode, units = nothing;
-        config = MeshConfig(units; mode),
-    ) <: AbstractMesh3D
+function __MeshCartesianStatic(config::MeshConfig, ::VertexMode, units = nothing)
     x = collect(config.xMin:config.Δx:config.xMax)
     y = collect(config.yMin:config.Δy:config.yMax)
     z = collect(config.zMin:config.Δz:config.zMax)
@@ -81,6 +103,38 @@ function MeshCartesianStatic(mode::VertexMode, units = nothing;
     return MeshCartesianStatic(
         config,
         pos, vel, acc, e, rho, phi,
+        nothing, nothing,
         nothing, nothing, nothing, nothing, nothing,
     )
+end
+
+function __MeshCartesianStatic(config::MeshConfig, ::CellMode, units = nothing)
+
+end
+
+function MeshCartesianStatic(config::MeshConfig, units = nothing)
+    return __MeshCartesianStatic(config, config.mode, units)
+end
+
+function MeshCartesianStatic(particles::StructArray, units = nothing;
+    mode = VertexMode(),    
+    assignment = CIC(),
+    Nx = 10,
+    Ny = 10,
+    Nz = 10,
+    assign = true,
+    kw...
+)
+    e = extent(particles)
+    config = MeshConfig(e, units; Nx, Ny, Nz, mode)
+    mesh = __MeshCartesianStatic(config, mode, units)
+
+    if assign
+        assignmesh(particles, mesh, assignment)
+    end
+    return mesh
+end
+
+function MeshCartesianStatic(particles::Array, units = nothing; kw...)
+    return MeshCartesianStatic(StructArray(particles))
 end
