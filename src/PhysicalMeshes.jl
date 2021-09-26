@@ -77,15 +77,16 @@ export
     Tetrahedron,
     
     # Mesh
-    centroid, center, midpoint,
+    centroid, #center,
+    midpoint,
 
     AbstractMesh,
     AbstractMesh3D, AbstractMesh2D, AbstractMesh1D,
     MeshConfig,
     MeshCartesianStatic,
 
-    volume,
-    area,
+    #volume,
+    #area,
     len # Circumference
 
 abstract type AbstractGeometryType{T} end
