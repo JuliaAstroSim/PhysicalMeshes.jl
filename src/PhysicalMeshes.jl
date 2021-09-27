@@ -7,6 +7,7 @@ using LinearAlgebra
 using StaticArrays
 #using Decimals
 using StructArrays
+using Polyester
 
 @reexport using PhysicalParticles
 
@@ -79,6 +80,7 @@ export
     # Mesh
     centroid, #center,
     midpoint,
+    assignmesh,
 
     AbstractMesh,
     AbstractMesh3D, AbstractMesh2D, AbstractMesh1D,
@@ -111,9 +113,9 @@ abstract type AbstractTriangle3D{T} <: AbstractTriangle{T} end
 abstract type AbstractTetrahedron{T} <: AbstractGeometryType{T} end
 
 abstract type AbstractMesh{T} <: AbstractGeometryType{T} end
-abstract type AbstractMesh1D{T} <: AbstractMesh{T} end
-abstract type AbstractMesh2D{T} <: AbstractMesh{T} end
-abstract type AbstractMesh3D{T} <: AbstractMesh{T} end
+# abstract type AbstractMesh1D{T} <: AbstractMesh{T} end
+# abstract type AbstractMesh2D{T} <: AbstractMesh{T} end
+# abstract type AbstractMesh3D{T} <: AbstractMesh{T} end
 
 include("Traits.jl")
 
