@@ -6,7 +6,7 @@
   - `VertexMode`: properties are located on grid points. `(Nx + 1) × (Ny + 1) × (Nz + 1)` data points in total.
 - `Nx`, `Ny`, `Nz`: number of cells. In `VertexMode`, there are N+1 vertices in each direction
 """
-struct MeshConfig{I,LEN}
+struct MeshConfig{I,LEN,VI,V}
     mode::MeshMode
     assignment::MeshAssignment
     Nx::I
@@ -22,6 +22,12 @@ struct MeshConfig{I,LEN}
     Δx::LEN
     Δy::LEN
     Δz::LEN
+
+    # Vector info
+    Δ::V
+    Min::V
+    Max::V
+    N::VI
 end
 
 function MeshConfig(units = nothing;
@@ -40,7 +46,12 @@ function MeshConfig(units = nothing;
     Δx = (xMax-xMin)/Nx
     Δy = (yMax-yMin)/Ny
     Δz = (zMax-zMin)/Nz
-    return MeshConfig(mode,assignment,Nx,Ny,Nz,xMin,xMax,yMin,yMax,zMin,zMax,Δx,Δy,Δz)
+
+    Δ = SVector(Δx, Δy, Δz)
+    Min = SVector(xMin, yMin, zMin)
+    Max = SVector(xMax, yMax, zMax)
+    N = SVector(Nx, Ny, Nz)
+    return MeshConfig(mode,assignment,Nx,Ny,Nz,xMin,xMax,yMin,yMax,zMin,zMax,Δx,Δy,Δz, Δ,Min,Max,N)
 end
 
 function MeshConfig(e::Extent, units = nothing;
@@ -59,7 +70,12 @@ function MeshConfig(e::Extent, units = nothing;
     Δx = (xMax-xMin)/Nx
     Δy = (yMax-yMin)/Ny
     Δz = (zMax-zMin)/Nz
-    return MeshConfig(mode,assignment,Nx,Ny,Nz,xMin,xMax,yMin,yMax,zMin,zMax,Δx,Δy,Δz)
+
+    Δ = SVector(Δx, Δy, Δz)
+    Min = SVector(xMin, yMin, zMin)
+    Max = SVector(xMax, yMax, zMax)
+    N = SVector(Nx, Ny, Nz)
+    return MeshConfig(mode,assignment,Nx,Ny,Nz,xMin,xMax,yMin,yMax,zMin,zMax,Δx,Δy,Δz, Δ,Min,Max,N)
 end
 
 struct MeshCartesianStatic{I, LEN, POS, VEL, ACC, _e, RHO, PHI, _B, _E, _U, _F, _G, _H, _J}
@@ -96,9 +112,9 @@ function __MeshCartesianStatic(config::MeshConfig, ::VertexMode, units = nothing
     pos = StructArray(PVector(p..., uLength) for p in iter)
     vel = StructArray(zv.vel for p in iter)
     acc = StructArray(zv.acc for p in iter)
-    e = StructArray(zv.potpermass for p in iter)
-    rho = StructArray(zv.density for p in iter)
-    phi = StructArray(zv.potpermass for p in iter)
+    e = MArray{Tuple{(config.N.+1)...}}([zv.potpermass for p in iter])
+    rho = MArray{Tuple{(config.N.+1)...}}([zv.density for p in iter])
+    phi = MArray{Tuple{(config.N.+1)...}}([zv.potpermass for p in iter])
 
     return MeshCartesianStatic(
         config,
