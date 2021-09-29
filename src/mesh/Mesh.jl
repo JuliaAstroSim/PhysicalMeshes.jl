@@ -7,36 +7,27 @@
 - `Nx`, `Ny`, `Nz`: number of cells. In `VertexMode`, there are N+1 vertices in each direction
 - `NB`: Number of boundary points
 """
-struct MeshConfig{I,LEN,VI,V,U}
+struct MeshConfig{I,VI,V,U}
     mode::MeshMode
     assignment::MeshAssignment
     units::U
-    Nx::I
-    Ny::I
-    Nz::I
+    dim::I
     NB::I # Number of boundary points
-
-    xMin::LEN
-    xMax::LEN
-    yMin::LEN
-    yMax::LEN
-    zMin::LEN
-    zMax::LEN
-    Δx::LEN
-    Δy::LEN
-    Δz::LEN
 
     # Vector info
     Δ::V
     Min::V
     Max::V
-    N::VI
+    N::VI    # length of data grid
+    Len::VI  # total length (add two side of boundaries)
+    LenH::VI # length with one side of boundary
 end
 
 function Base.show(io::IO, config::MeshConfig)
     print(io, 
     """
     Mesh config:
+                          dim: $(config.dim)
                          mode: $(config.mode)
             assignment method: $(config.assignment)
                         units: $(config.units)
@@ -51,9 +42,9 @@ end
 function MeshConfig(units = nothing;
     mode = VertexMode(),
     assignment = CIC(),
-    Nx = 10,
-    Ny = 10,
-    Nz = 10,
+    Nx = 5,
+    Ny = 5,
+    Nz = 5,
     NB = 1,
     xMin = isnothing(units) ? -1.0 : -1.0 * units[1],
     xMax = isnothing(units) ? +1.0 : +1.0 * units[1],
@@ -61,6 +52,7 @@ function MeshConfig(units = nothing;
     yMax = isnothing(units) ? +1.0 : +1.0 * units[1],
     zMin = isnothing(units) ? -1.0 : -1.0 * units[1],
     zMax = isnothing(units) ? +1.0 : +1.0 * units[1],
+    dim = 3,
 )
     Δx = (xMax-xMin)/Nx
     Δy = (yMax-yMin)/Ny
@@ -70,10 +62,12 @@ function MeshConfig(units = nothing;
     Min = SVector(xMin, yMin, zMin)
     Max = SVector(xMax, yMax, zMax)
     N = SVector(Nx, Ny, Nz)
+    Len = N .+ (2 * NB)
+    LenH = N .+ NB
     return MeshConfig(
-        mode,assignment,units,
-        Nx,Ny,Nz,NB,xMin,xMax,yMin,yMax,zMin,zMax,Δx,Δy,Δz,
-        Δ,Min,Max,N,
+        mode,assignment,units,dim,NB,
+        Δ[1:dim],Min[1:dim],Max[1:dim],N[1:dim],Len[1:dim],LenH[1:dim],
+        #Nx,Ny,Nz,NB,xMin,xMax,yMin,yMax,zMin,zMax,Δx,Δy,Δz,
     )
 end
 
@@ -84,6 +78,7 @@ function MeshConfig(e::Extent, units = nothing;
     Ny = 10,
     Nz = 10,
     NB = 1,
+    dim = 3,
 )
     xMin = e.xMin
     yMin = e.yMin
@@ -99,15 +94,17 @@ function MeshConfig(e::Extent, units = nothing;
     Min = SVector(xMin, yMin, zMin)
     Max = SVector(xMax, yMax, zMax)
     N = SVector(Nx, Ny, Nz)
+    Len = N .+ (2 * NB)
+    LenH = N .+ NB
     return MeshConfig(
-        mode,assignment,units,
-        Nx,Ny,Nz,NB,xMin,xMax,yMin,yMax,zMin,zMax,Δx,Δy,Δz,
-        Δ,Min,Max,N,
+        mode,assignment,units,dim,NB,
+        Δ[1:dim],Min[1:dim],Max[1:dim],N[1:dim],Len[1:dim],LenH[1:dim],
+        #Nx,Ny,Nz,NB,xMin,xMax,yMin,yMax,zMin,zMax,Δx,Δy,Δz,
     )
 end
 
-struct MeshCartesianStatic{I, LEN, VI, V, U, POS, VEL, ACC, _e, RHO, PHI, _B, _E, _U, _F, _G, _H, _J} <: AbstractMesh{U}
-    config::MeshConfig{I,LEN,VI,V,U}
+struct MeshCartesianStatic{I, VI, V, U, POS, VEL, ACC, _e, RHO, PHI, _B, _E, _U, _F, _G, _H, _J} <: AbstractMesh{U}
+    config::MeshConfig{I,VI,V,U}
     pos::POS
     vel::VEL
     acc::ACC
@@ -127,11 +124,9 @@ struct MeshCartesianStatic{I, LEN, VI, V, U, POS, VEL, ACC, _e, RHO, PHI, _B, _E
 end
 
 function __MeshCartesianStatic(config::MeshConfig, ::VertexMode, units = nothing)
-    x = collect(config.xMin - config.Δx * config.NB:config.Δx:config.xMax + config.Δx * config.NB)
-    y = collect(config.yMin - config.Δy * config.NB:config.Δy:config.yMax + config.Δy * config.NB)
-    z = collect(config.zMin - config.Δz * config.NB:config.Δz:config.zMax + config.Δz * config.NB)
+    a = [collect(config.Min[i] - config.Δ[i] * config.NB:config.Δ[i]:config.Max[i] + config.Δ[i] * config.NB) for i in 1:config.dim]
 
-    iter = Iterators.product(x,y,z)
+    iter = Iterators.product(a...)
 
     uLength = getuLength(units)
 
@@ -160,6 +155,11 @@ function MeshCartesianStatic(config::MeshConfig, units = nothing)
     return __MeshCartesianStatic(config, config.mode, units)
 end
 
+function MeshCartesianStatic(units = nothing; kw...)
+    config = MeshConfig(units; kw...)
+    return __MeshCartesianStatic(config, config.mode, units)
+end
+
 function MeshCartesianStatic(particles::StructArray, units = nothing;
     mode = VertexMode(),    
     assignment = CIC(),
@@ -171,7 +171,7 @@ function MeshCartesianStatic(particles::StructArray, units = nothing;
     kw...
 )
     e = extent(particles)
-    config = MeshConfig(e, units; Nx, Ny, Nz, NB, mode)
+    config = MeshConfig(e, units; Nx, Ny, Nz, NB, mode, kw...)
     mesh = __MeshCartesianStatic(config, mode, units)
 
     if assign
