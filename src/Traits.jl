@@ -21,3 +21,7 @@ abstract type MeshAssignment end
 struct NGP <: MeshAssignment end # nearest grid point
 struct CIC <: MeshAssignment end # cloud in cell
 struct TSC <: MeshAssignment end # triangular shaped cloud
+
+abstract type BoundaryCondition end
+struct Periodic <: BoundaryCondition end
+struct Dirichlet <: BoundaryCondition end

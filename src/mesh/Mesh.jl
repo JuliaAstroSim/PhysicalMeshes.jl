@@ -7,9 +7,11 @@
 - `Nx`, `Ny`, `Nz`: number of cells. In `VertexMode`, there are N+1 vertices in each direction
 - `NB`: Number of boundary points
 """
-struct MeshConfig{I,VI,V,U}
+struct MeshConfig{I,VI,V,U,F}
     mode::MeshMode
     assignment::MeshAssignment
+    boundary::BoundaryCondition
+
     units::U
     dim::I
     NB::I # Number of boundary points
@@ -21,6 +23,8 @@ struct MeshConfig{I,VI,V,U}
     N::VI    # length of data grid
     Len::VI  # total length (add two side of boundaries)
     LenH::VI # length with one side of boundary
+
+    eps::F
 end
 
 function Base.show(io::IO, config::MeshConfig)
@@ -30,18 +34,21 @@ function Base.show(io::IO, config::MeshConfig)
                           dim: $(config.dim)
                          mode: $(config.mode)
             assignment method: $(config.assignment)
+           Boundary Condition: $(config.boundary)
                         units: $(config.units)
               Number of Cells: $(config.N)
     Number of boundary points: $(config.NB)
                           Min: $(config.Min)
                           Max: $(config.Max)
                             Δ: $(config.Δ)
+                          eps: $(config.eps)
     """)
 end
 
 function MeshConfig(units = nothing;
     mode = VertexMode(),
     assignment = CIC(),
+    boundary = Periodic(),
     Nx = 5,
     Ny = 5,
     Nz = 5,
@@ -53,6 +60,7 @@ function MeshConfig(units = nothing;
     zMin = isnothing(units) ? -1.0 : -1.0 * units[1],
     zMax = isnothing(units) ? +1.0 : +1.0 * units[1],
     dim = 3,
+    eps = 1.0e-6,
 )
     Δx = (xMax-xMin)/Nx
     Δy = (yMax-yMin)/Ny
@@ -65,20 +73,22 @@ function MeshConfig(units = nothing;
     Len = N .+ (2 * NB)
     LenH = N .+ NB
     return MeshConfig(
-        mode,assignment,units,dim,NB,
+        mode,assignment,boundary,units,dim,NB,
         Δ[1:dim],Min[1:dim],Max[1:dim],N[1:dim],Len[1:dim],LenH[1:dim],
-        #Nx,Ny,Nz,NB,xMin,xMax,yMin,yMax,zMin,zMax,Δx,Δy,Δz,
+        eps
     )
 end
 
 function MeshConfig(e::Extent, units = nothing;
     mode = VertexMode(),
     assignment = CIC(),
+    boundary = Periodic(),
     Nx = 10,
     Ny = 10,
     Nz = 10,
     NB = 1,
     dim = 3,
+    eps = 1.0e-6,
 )
     xMin = e.xMin
     yMin = e.yMin
@@ -97,14 +107,14 @@ function MeshConfig(e::Extent, units = nothing;
     Len = N .+ (2 * NB)
     LenH = N .+ NB
     return MeshConfig(
-        mode,assignment,units,dim,NB,
+        mode,assignment,boundary,units,dim,NB,
         Δ[1:dim],Min[1:dim],Max[1:dim],N[1:dim],Len[1:dim],LenH[1:dim],
-        #Nx,Ny,Nz,NB,xMin,xMax,yMin,yMax,zMin,zMax,Δx,Δy,Δz,
+        eps,
     )
 end
 
-struct MeshCartesianStatic{I, VI, V, U, POS, VEL, ACC, _e, RHO, PHI, _B, _E, _U, _F, _G, _H, _J} <: AbstractMesh{U}
-    config::MeshConfig{I,VI,V,U}
+struct MeshCartesianStatic{I, VI, V, U, F, POS, VEL, ACC, _e, RHO, PHI, _B, _E, _U, _F, _G, _H, _J} <: AbstractMesh{U}
+    config::MeshConfig{I,VI,V,U,F}
     pos::POS
     vel::VEL
     acc::ACC
@@ -163,6 +173,7 @@ end
 function MeshCartesianStatic(particles::StructArray, units = nothing;
     mode = VertexMode(),    
     assignment = CIC(),
+    boundary = Periodic(),
     Nx = 10,
     Ny = 10,
     Nz = 10,
@@ -171,7 +182,7 @@ function MeshCartesianStatic(particles::StructArray, units = nothing;
     kw...
 )
     e = extent(particles)
-    config = MeshConfig(e, units; Nx, Ny, Nz, NB, mode, kw...)
+    config = MeshConfig(e, units; Nx, Ny, Nz, NB, mode, assignment, boundary, kw...)
     mesh = __MeshCartesianStatic(config, mode, units)
 
     if assign
@@ -181,5 +192,5 @@ function MeshCartesianStatic(particles::StructArray, units = nothing;
 end
 
 function MeshCartesianStatic(particles::Array, units = nothing; kw...)
-    return MeshCartesianStatic(StructArray(particles))
+    return MeshCartesianStatic(StructArray(particles), units; kw...)
 end

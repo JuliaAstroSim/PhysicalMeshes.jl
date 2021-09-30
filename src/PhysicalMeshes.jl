@@ -33,6 +33,7 @@ export
     OnEdge, OnFace,
 
     CellMode, VertexMode,
+    Periodic, Dirichlet,
 
     NGP, CIC, TSC,
 
