@@ -25,3 +25,4 @@ struct TSC <: MeshAssignment end # triangular shaped cloud
 abstract type BoundaryCondition end
 struct Periodic <: BoundaryCondition end
 struct Dirichlet <: BoundaryCondition end
+struct Vacuum <: BoundaryCondition end

@@ -7,7 +7,7 @@ function particle2mesh(mesh::AbstractMesh, pos::AbstractArray, rho::Number, ::Ve
     
     # Here, left means smaller coordinate value in that dimension
     # find the index of nearest left and right vertex
-    idl = floor.(Int, (pos .- config.Min) ./ config.Δ) .+ 1 .+ config.NB
+    idl = floor.(Int, (pos .- config.Min) ./ config.Δ) .+ 1 .+ config.NG
     idr = idl .+ 1
 
     pl = SVector(mesh.pos[idl...])       # position of left vertex

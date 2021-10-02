@@ -5,7 +5,7 @@
   - `CellMode`: properties are located in cell centers. `Nx × Ny × Nz` data points in total.
   - `VertexMode`: properties are located on grid points. `(Nx + 1) × (Ny + 1) × (Nz + 1)` data points in total.
 - `Nx`, `Ny`, `Nz`: number of cells. In `VertexMode`, there are N+1 vertices in each direction
-- `NB`: Number of boundary points
+- `NG`: Number of boundary points
 """
 struct MeshConfig{I,VI,V,U,F}
     mode::MeshMode
@@ -14,7 +14,7 @@ struct MeshConfig{I,VI,V,U,F}
 
     units::U
     dim::I
-    NB::I # Number of boundary points
+    NG::I # Number of ghost points. 
 
     # Vector info
     Δ::V
@@ -37,7 +37,7 @@ function Base.show(io::IO, config::MeshConfig)
            Boundary Condition: $(config.boundary)
                         units: $(config.units)
               Number of Cells: $(config.N)
-    Number of boundary points: $(config.NB)
+       Number of ghost points: $(config.NG)
                           Min: $(config.Min)
                           Max: $(config.Max)
                             Δ: $(config.Δ)
@@ -52,7 +52,7 @@ function MeshConfig(units = nothing;
     Nx = 5,
     Ny = 5,
     Nz = 5,
-    NB = 1,
+    NG = 0,
     xMin = isnothing(units) ? -1.0 : -1.0 * units[1],
     xMax = isnothing(units) ? +1.0 : +1.0 * units[1],
     yMin = isnothing(units) ? -1.0 : -1.0 * units[1],
@@ -70,10 +70,10 @@ function MeshConfig(units = nothing;
     Min = SVector(xMin, yMin, zMin)
     Max = SVector(xMax, yMax, zMax)
     N = SVector(Nx, Ny, Nz)
-    Len = N .+ (2 * NB)
-    LenH = N .+ NB
+    Len = N .+ (2 * NG)
+    LenH = N .+ NG
     return MeshConfig(
-        mode,assignment,boundary,units,dim,NB,
+        mode,assignment,boundary,units,dim,NG,
         Δ[1:dim],Min[1:dim],Max[1:dim],N[1:dim],Len[1:dim],LenH[1:dim],
         eps
     )
@@ -86,7 +86,7 @@ function MeshConfig(e::Extent, units = nothing;
     Nx = 10,
     Ny = 10,
     Nz = 10,
-    NB = 1,
+    NG = 1,
     dim = 3,
     eps = 1.0e-6,
 )
@@ -104,10 +104,10 @@ function MeshConfig(e::Extent, units = nothing;
     Min = SVector(xMin, yMin, zMin)
     Max = SVector(xMax, yMax, zMax)
     N = SVector(Nx, Ny, Nz)
-    Len = N .+ (2 * NB)
-    LenH = N .+ NB
+    Len = N .+ (2 * NG)
+    LenH = N .+ NG
     return MeshConfig(
-        mode,assignment,boundary,units,dim,NB,
+        mode,assignment,boundary,units,dim,NG,
         Δ[1:dim],Min[1:dim],Max[1:dim],N[1:dim],Len[1:dim],LenH[1:dim],
         eps,
     )
@@ -134,7 +134,7 @@ struct MeshCartesianStatic{I, VI, V, U, F, POS, VEL, ACC, _e, RHO, PHI, _B, _E, 
 end
 
 function __MeshCartesianStatic(config::MeshConfig, ::VertexMode, units = nothing)
-    a = [collect(config.Min[i] - config.Δ[i] * config.NB:config.Δ[i]:config.Max[i] + config.Δ[i] * config.NB) for i in 1:config.dim]
+    a = [collect(config.Min[i] - config.Δ[i] * config.NG:config.Δ[i]:config.Max[i] + config.Δ[i] * config.NG) for i in 1:config.dim]
 
     iter = Iterators.product(a...)
 
@@ -142,12 +142,18 @@ function __MeshCartesianStatic(config::MeshConfig, ::VertexMode, units = nothing
 
     zv = ZeroValue(units)
 
-    pos = StructArray(PVector(p..., uLength) for p in iter)
-    vel = StructArray(zv.vel for p in iter)
-    acc = StructArray(zv.acc for p in iter)
-    e = MArray{Tuple{(config.N.+(1+2*config.NB))...}}([zv.potpermass for p in iter])
-    rho = MArray{Tuple{(config.N.+(1+2*config.NB))...}}([zv.density for p in iter])
-    phi = MArray{Tuple{(config.N.+(1+2*config.NB))...}}([zv.potpermass for p in iter])
+    if config.dim == 1 # StructArray is empty for eltype
+        pos = SVector{config.N[1]+1+2*config.NG[1]}([PVector(p..., uLength) for p in iter])
+        vel = SVector{config.N[1]+1+2*config.NG[1]}([zv.vel for p in iter])
+        acc = SVector{config.N[1]+1+2*config.NG[1]}([zv.acc for p in iter])
+    else
+        pos = StructArray(PVector(p..., uLength) for p in iter)
+        vel = StructArray(zv.vel for p in iter)
+        acc = StructArray(zv.acc for p in iter)
+    end
+    e = MArray{Tuple{(config.N.+(1+2*config.NG))...}}([zv.potpermass for p in iter])
+    rho = MArray{Tuple{(config.N.+(1+2*config.NG))...}}([zv.density for p in iter])
+    phi = MArray{Tuple{(config.N.+(1+2*config.NG))...}}([zv.potpermass for p in iter])
 
     return MeshCartesianStatic(
         config,
@@ -177,12 +183,12 @@ function MeshCartesianStatic(particles::StructArray, units = nothing;
     Nx = 10,
     Ny = 10,
     Nz = 10,
-    NB = 1,
+    NG = 1,
     assign = true,
     kw...
 )
     e = extent(particles)
-    config = MeshConfig(e, units; Nx, Ny, Nz, NB, mode, assignment, boundary, kw...)
+    config = MeshConfig(e, units; Nx, Ny, Nz, NG, mode, assignment, boundary, kw...)
     mesh = __MeshCartesianStatic(config, mode, units)
 
     if assign
