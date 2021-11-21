@@ -81,7 +81,8 @@ export
     # Mesh
     centroid, #center,
     midpoint,
-    assignmesh,
+    particle2mesh, assignmesh,
+    mesh2particle, assignparticle,
 
     AbstractMesh,
     AbstractMesh3D, AbstractMesh2D, AbstractMesh1D,

@@ -133,8 +133,21 @@ struct MeshCartesianStatic{I, VI, V, U, F, POS, VEL, ACC, _e, RHO, PHI, _B, _E, 
     J::_J
 end
 
+function Base.show(io::IO, mesh::MeshCartesianStatic)
+    n = fieldnames(typeof(mesh))
+    print(io,
+        """
+        Static Cartesian Mesh
+
+        $(mesh.config)
+
+        Assigned field names: $(filter(x->!isnothing(getfield(mesh,x)), n[2:end]))
+        """
+    )
+end
+
 function __MeshCartesianStatic(config::MeshConfig, ::VertexMode, units = nothing)
-    a = [collect(config.Min[i] - config.Δ[i] * config.NG:config.Δ[i]:config.Max[i] + config.Δ[i] * config.NG) for i in 1:config.dim]
+    a = [collect(config.Min[i] - config.Δ[i] * config.NG:config.Δ[i]:config.Max[i] + 1.000001*config.Δ[i] * config.NG) for i in 1:config.dim]
 
     iter = Iterators.product(a...)
 
@@ -177,7 +190,7 @@ function MeshCartesianStatic(units = nothing; kw...)
 end
 
 function MeshCartesianStatic(particles::StructArray, units = nothing;
-    mode = VertexMode(),    
+    mode = VertexMode(),
     assignment = CIC(),
     boundary = Periodic(),
     Nx = 10,
@@ -187,12 +200,14 @@ function MeshCartesianStatic(particles::StructArray, units = nothing;
     assign = true,
     kw...
 )
-    e = extent(particles)
+    ratio = 1.01 + max(2/Nx, 2/Ny, 2/Nz) # Make sure that backward assignment are not affected by boundaries, at least in 3-element laplace conv
+    e = extent(particles) * ratio
+
     config = MeshConfig(e, units; Nx, Ny, Nz, NG, mode, assignment, boundary, kw...)
     mesh = __MeshCartesianStatic(config, mode, units)
 
     if assign
-        assignmesh(particles, mesh, assignment)
+        assignmesh(particles, mesh, :Mass, :rho)
     end
     return mesh
 end
