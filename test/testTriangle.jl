@@ -10,9 +10,9 @@
         @test centroid(t) == PVector2D(8.0/3.0, 2.0)
         @test circumcenter(t) == PVector2D(2.0, 1.5)
 
-        @test incircle(t, PVector2D(3.0, 2.0)) == Inner()
+        @test incircle(t, PVector2D(3.0, 2.0)) == Interior()
         @test incircle(t, PVector2D()) == OnEdge()
-        @test incircle(t, PVector2D(6.0, 0.0)) == Outter()
+        @test incircle(t, PVector2D(6.0, 0.0)) == Exterior()
     end
 
     @testset "Triangle" begin

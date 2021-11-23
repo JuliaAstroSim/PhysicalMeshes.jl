@@ -8,8 +8,8 @@ struct Fast <: PrecisionMode end
 struct Exact <: PrecisionMode end
 
 abstract type AbstractPredicate end
-struct Inner <: AbstractPredicate end
-struct Outter <: AbstractPredicate end
+struct Interior <: AbstractPredicate end
+struct Exterior <: AbstractPredicate end
 struct OnEdge <: AbstractPredicate end
 struct OnFace <: AbstractPredicate end
 

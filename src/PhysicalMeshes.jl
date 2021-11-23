@@ -29,21 +29,13 @@ export
 
     Fast, Exact,
 
-    Inner, Outer,
+    Interior, Exterior,
     OnEdge, OnFace,
 
     CellMode, VertexMode,
     Periodic, Dirichlet, Vacuum,
 
     NGP, CIC, TSC,
-
-    Fast,
-    Exact,
-
-    Inner,
-    Outter,
-    OnEdge,
-    OnFace,
 
     # Core
     orient,

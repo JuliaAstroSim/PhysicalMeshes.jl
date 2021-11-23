@@ -20,9 +20,9 @@ function incircle(a::AbstractPoint2D, b::AbstractPoint2D, c::AbstractPoint2D, d:
     result = ustrip(incircle_kernel(a, b, c, d))
 
     if result < 0
-        return Inner()
+        return Interior()
     elseif result > 0
-        return Outter()
+        return Exterior()
     end
 
     return OnEdge()
@@ -32,9 +32,9 @@ function insphere_exact(a::AbstractPoint2D, b::AbstractPoint2D, c::AbstractPoint
     result = ustrip(floatnumber(incircle_kernel(decimal(a), decimal(b), decimal(c), decimal(d))))
 
     if result < 0
-        return Inner()
+        return Interior()
     elseif result > 0
-        return Outter()
+        return Exterior()
     end
 
     return OnEdge()
@@ -79,9 +79,9 @@ function insphere(a::AbstractPoint3D, b::AbstractPoint3D, c::AbstractPoint3D, d:
     result = ustrip(insphere_kernel(a, b, c, d, e))
 
     if result < 0
-        return Inner()
+        return Interior()
     elseif result > 0
-        return Outter()
+        return Exterior()
     end
 
     return OnEdge()
@@ -91,9 +91,9 @@ function insphere_exact(a::AbstractPoint3D, b::AbstractPoint3D, c::AbstractPoint
     result = ustrip(floatnumber(insphere_kernel(decimal(a), decimal(b), decimal(c), decimal(d), decimal(e))))
 
     if result < 0
-        return Inner()
+        return Interior()
     elseif result > 0
-        return Outter()
+        return Exterior()
     end
 
     return OnEdge()
