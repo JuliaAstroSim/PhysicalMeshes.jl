@@ -37,6 +37,15 @@ makedocs(
         "Home" => "index.md",
         "Manual" => Any[
             "manual/guide.md",
+            "manual/Triangle.md",
+            "manual/Line.md",
+            "manual/Cube.md",
+            "manual/Tetrahedron.md",
+            "manual/MeshCartesianStatic.md",
+        ],
+        "Library" => Any[
+            "lib/Types.md",
+            "lib/Methods.md",
         ],
         #"contributing.md",
     ],

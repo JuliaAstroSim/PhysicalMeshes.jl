@@ -1,6 +1,39 @@
 # PhysicalMeshes.jl
 
 [![codecov](https://codecov.io/gh/JuliaAstroSim/PhysicalMeshes.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaAstroSim/PhysicalMeshes.jl)
+[![][docs-dev-img]][docs-dev-url]
+
+## Installation
+
+```julia
+]add PhysicalMeshes
+```
+
+or
+
+```julia
+using Pkg; Pkg.add("PhysicalMeshes")
+```
+
+or
+
+```julia
+using Pkg; Pkg.add("https://github.com/JuliaAstroSim/PhysicalMeshes.jl")
+```
+
+To test the Package:
+```julia
+]test PhysicalMeshes
+```
+
+## Documentation
+
+- [**Dev**][docs-dev-url] &mdash; *documentation of the in-development version.*
+
+[docs-dev-img]: https://img.shields.io/badge/docs-dev-blue.svg
+[docs-dev-url]: https://juliaastrosim.github.io/PhysicalMeshes.jl/dev
+
+For beginners, it is highly recommended to read the [documentation of PhysicalParticles.jl](https://juliaastrosim.github.io/PhysicalParticles.jl/dev/).
 
 ## References
 

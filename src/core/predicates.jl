@@ -27,6 +27,10 @@ function incircle(a::AbstractPoint2D, b::AbstractPoint2D, c::AbstractPoint2D, d:
 
     return OnEdge()
 end
+
+#TODO inplane of 3D triangle
+#TODO incircle of 3D triangle
+
 #=
 function insphere_exact(a::AbstractPoint2D, b::AbstractPoint2D, c::AbstractPoint2D, d::AbstractPoint2D)
     result = ustrip(floatnumber(incircle_kernel(decimal(a), decimal(b), decimal(c), decimal(d))))
