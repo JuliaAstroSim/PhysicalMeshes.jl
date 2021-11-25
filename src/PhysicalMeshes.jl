@@ -7,7 +7,6 @@ using LinearAlgebra
 using StaticArrays
 #using Decimals
 using StructArrays
-using Polyester
 
 @reexport using PhysicalParticles
 

@@ -35,10 +35,6 @@ To test the Package:
 
 For beginners, it is highly recommended to read the [documentation of PhysicalParticles.jl](https://juliaastrosim.github.io/PhysicalParticles.jl/dev/).
 
-## References
-
-- [GeometicalPredicates.jl](https://github.com/JuliaGeometry/GeometricalPredicates.jl)
-
 ## Package ecosystem
 
 - Basic data structure: [PhysicalParticles.jl](https://github.com/JuliaAstroSim/PhysicalParticles.jl)
