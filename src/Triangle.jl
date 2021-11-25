@@ -76,28 +76,65 @@ end
 
 # https://en.wikipedia.org/wiki/Triangle
 
+"""
+    len(t::AbstractTriangle)
+
+Circumference of the triangle
+"""
 len(t::AbstractTriangle) = norm(t.a - t.b) + norm(t.a - t.c) + norm(t.b - t.c)
 
+"""
+    orient(t::AbstractTriangle)
+
+Orientation vector of triangle (return a `PVector`). See also `orientation`
+"""
 orient(t::AbstractTriangle) = orient(t.a, t.b, t.c)
 
 #orient_exact(t::AbstractTriangle) = orient_exact(t.a, t.b, t.c)
 
+"""
+    area(t::AbstractTriangle2D)
+    area(t::AbstractTriangle3D)
+
+Unsigned area of triangle
+"""
 area(t::AbstractTriangle2D) = 0.5 * abs(getz(orient(t)))
 
 area(t::AbstractTriangle3D) = 0.5 * norm(orient(t))
 
+"""
+    centroid(t::AbstractTriangle)
+
+Averaged position center of triangle
+"""
 centroid(t::AbstractTriangle) = (t.a + t.b + t.c) / 3.0
+
 
 ### Refer to Meshkit project
 
+"""
+    circumcenter(t::AbstractTriangle)
+
+Return the circumcenter of triangle (as a `PVector` or `PVector2D`)
+"""
 circumcenter(t::AbstractTriangle) = circumcenter(t.a, t.b, t.c)
 
 #circumcenter_exact(t::AbstractTriangle) = circumcenter_exact(t.a, t.b, t.c)
 
+"""
+    incircle(t::AbstractTriangle2D, p::AbstractPoint2D)
+
+Test whether a point locates inside the circumcircle of triangle. Return a trait (`Interior`, `Exterior`, or `OnEdge`)
+"""
 incircle(t::AbstractTriangle2D, p::AbstractPoint2D) = incircle(t.a, t.b, t.c, p)
 
 #incircle_exact(t::AbstractTriangle2D, p::AbstractPoint2D) = incircle_exact(t.a, t.b, t.c, p)
 
+"""
+    orientation(t::AbstractTriangle2D)
+
+Orientation of triangle. Return a trait (`NegativelyOriented`, `PositivelyOriented`, or `UnOriented`)
+"""
 function orientation(t::AbstractTriangle2D)
     x = ustrip(getz(orient(t)))
     if x < 0

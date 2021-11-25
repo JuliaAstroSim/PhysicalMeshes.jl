@@ -1,3 +1,5 @@
+#! This file is deprecated
+
 # Quantity
 decimal(x::Quantity{T,D,U}) where {T<:FloatTypes, D, U} = 
     Quantity{Decimal, D, U}(x.val)

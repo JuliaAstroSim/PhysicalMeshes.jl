@@ -13,7 +13,7 @@
     @test insphere(t, PVector()) == OnEdge()
     @test insphere(t, PVector(2.0, 0.0, 0.0)) == Exterior()
 
-    @test volume(t) == 1.0 / 6.0
+    @test PhysicalMeshes.volume(t) == 1.0 / 6.0
 
     @test orientation(t) == PositivelyOriented()
 end

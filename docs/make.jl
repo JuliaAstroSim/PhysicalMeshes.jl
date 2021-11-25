@@ -44,7 +44,6 @@ makedocs(
             "manual/MeshCartesianStatic.md",
         ],
         "Library" => Any[
-            "lib/Types.md",
             "lib/Methods.md",
         ],
         #"contributing.md",

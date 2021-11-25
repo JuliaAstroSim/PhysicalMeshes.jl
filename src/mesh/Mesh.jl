@@ -1,30 +1,48 @@
 """
     struct MeshConfig
 
+## Fields
 - `mode`: the way of sampling physical properties
   - `CellMode`: properties are located in cell centers. `Nx × Ny × Nz` data points in total.
   - `VertexMode`: properties are located on grid points. `(Nx + 1) × (Ny + 1) × (Nz + 1)` data points in total.
-- `Nx`, `Ny`, `Nz`: number of cells. In `VertexMode`, there are N+1 vertices in each direction
-- `NG`: Number of boundary points
+- `assignment`: mesh assignment algorithm
+  - `NGP`: nearest grid point
+  - `CIC`: cloud in cell
+  - `TSC`: triangular shaped cloud
+- `boundary`: boundary conditions
+  - `Periodic`
+  - `Vacuum`
+  - `Dirichlet`
+- `units`: support `nothing`, `uAstro`, `uSI`, `uGadget2`, `uCGS`
+- `dim`: dimension of the mesh
+- `NG`: Number of boundary ghost cells
+- `Δ`: mesh resolution in each direction
+- `Min`: minimum coordinate of each direction, not including ghost cells. Corresponds to cell coordinates in cell mode, and vertex coordinates in vertex mode.
+- `Max`: maximum coordinate of each direction, not including ghost cells. Corresponds to cell coordinates in cell mode, and vertex coordinates in vertex mode.
+- `N`: number of cells in each direction, not including ghost cells. In `VertexMode`, there are N+1 vertices in each direction
+- `Len`: total number of cells in each direction, including ghost cells.
+
+## Constructors
+- `MeshConfig(units = nothing; kw...)`: all fields can be modified by keywords. Try construct one to see default values
+- `MeshConfig(e::Extent, units = nothing; kw...)`: `Min` and `Max` are extracted from `e`. Other field can be modified by keywords
+
+For more instructions, see the documentation: https://juliaastrosim.github.io/PhysicalMeshes.jl/dev
 """
-struct MeshConfig{I,VI,V,U,F}
+struct MeshConfig{I,VI,V,U}
     mode::MeshMode
     assignment::MeshAssignment
     boundary::BoundaryCondition
 
     units::U
     dim::I
-    NG::I # Number of ghost points. 
+    NG::I
 
     # Vector info
     Δ::V
     Min::V
     Max::V
-    N::VI    # length of data grid
-    Len::VI  # total length (add two side of boundaries)
-    LenH::VI # length with one side of boundary
-
-    eps::F
+    N::VI
+    Len::VI
 end
 
 function Base.show(io::IO, config::MeshConfig)
@@ -41,7 +59,6 @@ function Base.show(io::IO, config::MeshConfig)
                           Min: $(config.Min)
                           Max: $(config.Max)
                             Δ: $(config.Δ)
-                          eps: $(config.eps)
     """)
 end
 
@@ -60,7 +77,6 @@ function MeshConfig(units = nothing;
     zMin = isnothing(units) ? -1.0 : -1.0 * units[1],
     zMax = isnothing(units) ? +1.0 : +1.0 * units[1],
     dim = 3,
-    eps = 1.0e-6,
 )
     Δx = (xMax-xMin)/Nx
     Δy = (yMax-yMin)/Ny
@@ -71,11 +87,9 @@ function MeshConfig(units = nothing;
     Max = SVector(xMax, yMax, zMax)
     N = SVector(Nx, Ny, Nz)
     Len = N .+ (2 * NG)
-    LenH = N .+ NG
     return MeshConfig(
         mode,assignment,boundary,units,dim,NG,
-        Δ[1:dim],Min[1:dim],Max[1:dim],N[1:dim],Len[1:dim],LenH[1:dim],
-        eps
+        Δ[1:dim],Min[1:dim],Max[1:dim],N[1:dim],Len[1:dim],
     )
 end
 
@@ -88,7 +102,6 @@ function MeshConfig(e::Extent, units = nothing;
     Nz = 10,
     NG = 1,
     dim = 3,
-    eps = 1.0e-6,
 )
     xMin = e.xMin
     yMin = e.yMin
@@ -105,16 +118,42 @@ function MeshConfig(e::Extent, units = nothing;
     Max = SVector(xMax, yMax, zMax)
     N = SVector(Nx, Ny, Nz)
     Len = N .+ (2 * NG)
-    LenH = N .+ NG
     return MeshConfig(
         mode,assignment,boundary,units,dim,NG,
-        Δ[1:dim],Min[1:dim],Max[1:dim],N[1:dim],Len[1:dim],LenH[1:dim],
-        eps,
+        Δ[1:dim],Min[1:dim],Max[1:dim],N[1:dim],Len[1:dim],
     )
 end
 
-struct MeshCartesianStatic{I, VI, V, U, F, POS, VEL, ACC, _e, RHO, PHI, _B, _E, _U, _F, _G, _H, _J} <: AbstractMesh{U}
-    config::MeshConfig{I,VI,V,U,F}
+"""
+    struct MeshCartesianStatic
+
+## Fields
+- `config::MeshConfig`
+- `pos`
+- `vel`
+- `acc`
+- `e`
+- `rho`
+- `phi`
+- `B`
+- `E`
+- `U`
+- `F`
+- `G`
+- `H`
+- `J`
+
+## Constructors
+keywords are passed into `MeshConfig`
+- `MeshCartesianStatic(config::MeshConfig, units = nothing)`
+- `MeshCartesianStatic(units = nothing; kw...)`
+- `MeshCartesianStatic(particles::StructArray, units = nothing; kw...)`
+- `MeshCartesianStatic(particles::Array, units = nothing; kw...)`
+
+For more instructions, see the documentation: https://juliaastrosim.github.io/PhysicalMeshes.jl/dev
+"""
+struct MeshCartesianStatic{I, VI, V, U, POS, VEL, ACC, _e, RHO, PHI, _B, _E, _U, _F, _G, _H, _J} <: AbstractMesh{U}
+    config::MeshConfig{I,VI,V,U}
     pos::POS
     vel::VEL
     acc::ACC

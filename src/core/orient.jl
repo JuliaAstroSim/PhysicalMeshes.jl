@@ -71,7 +71,7 @@ function orient_kernel(a::AbstractPoint3D, b::AbstractPoint3D, c::AbstractPoint3
     az = a.z - d.z
     bz = b.z - d.z
     cz = c.z - d.z
-    return ax * (bz * cy - by * cz) + bx * (cz * ay - cy * az) + cx * (az * by - ay * bz)
+    return ustrip(ax * (bz * cy - by * cz) + bx * (cz * ay - cy * az) + cx * (az * by - ay * bz))
 end
 
 """

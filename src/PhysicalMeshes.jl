@@ -40,6 +40,8 @@ export
     # Core
     orient,
     orientation,
+    centroid, #center,
+    midpoint,
 
     circumcenter,
     #circumcenter_exact,
@@ -71,8 +73,6 @@ export
     Tetrahedron,
     
     # Mesh
-    centroid, #center,
-    midpoint,
     particle2mesh, assignmesh,
     mesh2particle, assignparticle,
 
