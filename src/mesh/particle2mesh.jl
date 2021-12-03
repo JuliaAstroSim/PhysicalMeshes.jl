@@ -64,6 +64,10 @@ Base.@propagate_inbounds function assignmesh(particles::StructArray, mesh::MeshC
 
     block = ceil(Int64, length(particles) / Threads.nthreads())
     Threads.@threads for k in 1:Threads.nthreads()
+        if k > length(particles)
+            continue
+        end
+
         Head = block * (k-1) + 1
         Tail = block * k
         for i in Head:Tail
@@ -93,6 +97,10 @@ Base.Base.@propagate_inbounds function assignparticle(particles::StructArray, me
     config = mesh.config
     block = ceil(Int64, length(particles) / Threads.nthreads())
     Threads.@threads for k in 1:Threads.nthreads()
+        if k > length(particles)
+            continue
+        end
+
         Head = block * (k-1) + 1
         Tail = block * k
         for i in Head:Tail
