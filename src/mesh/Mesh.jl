@@ -152,8 +152,10 @@ keywords are passed into `MeshConfig`
 
 For more instructions, see the documentation: https://juliaastrosim.github.io/PhysicalMeshes.jl/dev
 """
-struct MeshCartesianStatic{I, VI, V, U, POS, VEL, ACC, _e, RHO, PHI, _B, _E, _U, _F, _G, _H, _J} <: AbstractMesh{U}
+struct MeshCartesianStatic{I, VI, V, U, D, POS, VEL, ACC, _e, RHO, PHI, _B, _E, _U, _F, _G, _H, _J} <: AbstractMesh{U}
     config::MeshConfig{I,VI,V,U}
+    data::D
+
     pos::POS
     vel::VEL
     acc::ACC
@@ -185,7 +187,7 @@ function Base.show(io::IO, mesh::MeshCartesianStatic)
     )
 end
 
-function __MeshCartesianStatic(config::MeshConfig, ::VertexMode, units = nothing)
+function __MeshCartesianStatic(config::MeshConfig, particles, ::VertexMode, units = nothing; gpu = false)
     a = [collect(config.Min[i] - config.Δ[i] * config.NG:config.Δ[i]:config.Max[i] + 1.000001*config.Δ[i] * config.NG) for i in 1:config.dim]
 
     iter = Iterators.product(a...)
@@ -195,37 +197,48 @@ function __MeshCartesianStatic(config::MeshConfig, ::VertexMode, units = nothing
     zv = ZeroValue(units)
 
     if config.dim == 1 # StructArray is empty for eltype
-        pos = SVector{config.N[1]+1+2*config.NG[1]}([PVector(p..., uLength) for p in iter])
-        vel = SVector{config.N[1]+1+2*config.NG[1]}([zv.vel for p in iter])
-        acc = SVector{config.N[1]+1+2*config.NG[1]}([zv.acc for p in iter])
+        pos = [PVector(p..., uLength) for p in iter]
+        vel = [zv.vel for p in iter]
+        acc = [zv.acc for p in iter]
     else
         pos = StructArray(PVector(p..., uLength) for p in iter)
         vel = StructArray(zv.vel for p in iter)
         acc = StructArray(zv.acc for p in iter)
     end
-    e = MArray{Tuple{(config.N.+(1+2*config.NG))...}}([zv.potpermass for p in iter])
-    rho = MArray{Tuple{(config.N.+(1+2*config.NG))...}}([zv.density for p in iter])
-    phi = MArray{Tuple{(config.N.+(1+2*config.NG))...}}([zv.potpermass for p in iter])
+    e = [zv.potpermass for p in iter]
+    rho = [zv.density for p in iter]
+    phi = [zv.potpermass for p in iter]
 
-    return MeshCartesianStatic(
-        config,
-        pos, vel, acc, e, rho, phi,
-        nothing, nothing,
-        nothing, nothing, nothing, nothing, nothing,
-    )
+    if gpu
+        return MeshCartesianStatic(
+            config,
+            cu(particles),
+            cu(pos), cu(vel), cu(acc), cu(e), cu(rho), cu(phi),
+            nothing, nothing,
+            nothing, nothing, nothing, nothing, nothing,
+        )
+    else
+        return MeshCartesianStatic(
+            config,
+            particles,
+            pos, vel, acc, e, rho, phi,
+            nothing, nothing,
+            nothing, nothing, nothing, nothing, nothing,
+        )
+    end
 end
 
-function __MeshCartesianStatic(config::MeshConfig, ::CellMode, units = nothing)
+function __MeshCartesianStatic(config::MeshConfig, particles, ::CellMode, units = nothing; kw...)
 
 end
 
-function MeshCartesianStatic(config::MeshConfig, units = nothing)
-    return __MeshCartesianStatic(config, config.mode, units)
+function MeshCartesianStatic(config::MeshConfig, particles, units = nothing; kw...)
+    return __MeshCartesianStatic(config, particles, config.mode, units; kw...)
 end
 
-function MeshCartesianStatic(units = nothing; kw...)
+function MeshCartesianStatic(::Nothing, units = nothing; gpu = false, kw...)
     config = MeshConfig(units; kw...)
-    return __MeshCartesianStatic(config, config.mode, units)
+    return __MeshCartesianStatic(config, nothing, config.mode, units; gpu)
 end
 
 function MeshCartesianStatic(particles::StructArray, units = nothing;
@@ -237,13 +250,14 @@ function MeshCartesianStatic(particles::StructArray, units = nothing;
     Nz = 10,
     NG = 1,
     assign = true,
+    gpu = false,
     kw...
 )
     ratio = 1.01 + max(2/Nx, 2/Ny, 2/Nz) # Make sure that backward assignment are not affected by boundaries, at least in 3-element laplace conv
     e = extent(particles) * ratio
 
     config = MeshConfig(e, units; Nx, Ny, Nz, NG, mode, assignment, boundary, kw...)
-    mesh = __MeshCartesianStatic(config, mode, units)
+    mesh = __MeshCartesianStatic(config, particles, mode, units; gpu)
 
     if assign
         assignmesh(particles, mesh, :Mass, :rho)
