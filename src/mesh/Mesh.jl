@@ -253,7 +253,7 @@ function MeshCartesianStatic(particles::StructArray, units = nothing;
     gpu = false,
     kw...
 )
-    ratio = 1.01 + max(2/Nx, 2/Ny, 2/Nz) # Make sure that backward assignment are not affected by boundaries, at least in 3-element laplace conv
+    ratio = 2.01 # Make sure that backward assignment are not affected by boundaries, at least in 3-element laplace conv
     e = extent(particles) * ratio
 
     config = MeshConfig(e, units; Nx, Ny, Nz, NG, mode, assignment, boundary, kw...)

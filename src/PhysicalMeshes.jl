@@ -10,6 +10,15 @@ using StructArrays
 
 @reexport using PhysicalParticles
 
+using CUDA
+macro hascuda(expr)
+    return has_cuda() ? :($(esc(expr))) : :(nothing)
+end
+@hascuda begin
+    using CUDA
+    CUDA.allowscalar(false)
+end
+
 import Core: Number
 import Base: +, -, *, /, show, real, length, iterate
 import Unitful: Units, FloatTypes
