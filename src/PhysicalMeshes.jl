@@ -23,7 +23,7 @@ import Core: Number
 import Base: +, -, *, /, show, real, length, iterate
 import Unitful: Units, FloatTypes
 #import Decimals: Decimal, decimal
-import PhysicalParticles: PVector2D, PVector, area, volume
+import PhysicalParticles: PVector2D, PVector, area, volume, mass_center
 
 export
     # Base
@@ -85,6 +85,7 @@ export
     mesh2particle, assignparticle,
     is_inbound,
     outbound_list,
+    total_mass,
 
     AbstractMesh,
     AbstractMesh3D, AbstractMesh2D, AbstractMesh1D,
@@ -135,6 +136,7 @@ include("Tetrahedron.jl")
 
 include("mesh/Mesh.jl")
 include("mesh/particle2mesh.jl")
+include("mesh/tools.jl")
 
 include("PrettyPrinting.jl")
 
