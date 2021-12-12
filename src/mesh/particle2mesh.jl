@@ -38,6 +38,29 @@ function TSCinfo(mesh::AbstractMesh, pos::AbstractArray)
     return id, r
 end
 
+function is_inbound(pos::PVector, config::MeshConfig)
+    if pos.x > config.Max[1] || pos.x < config.Min[1] ||
+        pos.y > config.Max[2] || pos.y < config.Min[2] ||
+        pos.z > config.Max[3] || pos.z < config.Min[3]
+        return false
+    else
+        return true
+    end
+end
+
+function outbound_list(pos::AbstractArray, m::MeshCartesianStatic)
+    config = m.config
+    list = Int[]
+    for i in eachindex(pos)
+        if !is_inbound(pos[i], config)
+            push!(list, i)
+        end
+    end
+    return list
+end
+
+outbound_list(m::MeshCartesianStatic) = outbound_list(m.data.Pos, m)
+
 function particle2mesh(mesh::AbstractMesh, pos::AbstractArray, rho::Number, symbolMesh::Symbol, ::VertexMode, ::NGP)
     # Find the nearest vertex and assign with rho
     id = NGPinfo(mesh, pos)
@@ -62,6 +85,7 @@ Base.@propagate_inbounds function assignmesh(particles::StructArray, mesh::MeshC
     config = mesh.config
     getproperty(mesh, symbolMesh) .*= 0.0
 
+    #TODO this is unsafe assign
     block = ceil(Int64, length(particles) / Threads.nthreads())
     Threads.@threads for k in 1:Threads.nthreads()
         if k > length(particles)
@@ -72,11 +96,17 @@ Base.@propagate_inbounds function assignmesh(particles::StructArray, mesh::MeshC
         Tail = block * k
         for i in Head:Tail
             rho = getproperty(particles, symbolParticle)[i] / prod(config.Δ)
-            pos = SVector(particles.Pos[i])
-            particle2mesh(mesh, pos, rho, symbolMesh, config.mode, config.assignment)
+            if is_inbound(particles.Pos[i], config)
+                pos = SVector(particles.Pos[i])
+                particle2mesh(mesh, pos, rho, symbolMesh, config.mode, config.assignment)
+            end
         end
     end
+
+    #TODO GPU
 end
+
+assignmesh(m::MeshCartesianStatic) = assignmesh(m.data, m, :Mass, :rho)
 
 function mesh2particle(mesh::AbstractMesh, pos::AbstractArray, symbolMesh::Symbol, ::VertexMode, ::NGP)
     id = NGPinfo(mesh, pos)
@@ -104,8 +134,11 @@ Base.Base.@propagate_inbounds function assignparticle(particles::StructArray, me
         Head = block * (k-1) + 1
         Tail = block * k
         for i in Head:Tail
-            pos = SVector(particles.Pos[i])
-            getproperty(particles, symbolParticle)[i] = mesh2particle(mesh, pos, symbolMesh, config.mode, config.assignment)
+            if is_inbound(particles.Pos[i], config)
+                pos = SVector(particles.Pos[i])
+                getproperty(particles, symbolParticle)[i] = mesh2particle(mesh, pos, symbolMesh, config.mode, config.assignment)
+            end
         end
     end
+    #TODO GPU
 end

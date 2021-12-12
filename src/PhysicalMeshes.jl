@@ -83,6 +83,8 @@ export
     # Mesh
     particle2mesh, assignmesh,
     mesh2particle, assignparticle,
+    is_inbound,
+    outbound_list,
 
     AbstractMesh,
     AbstractMesh3D, AbstractMesh2D, AbstractMesh1D,

@@ -32,6 +32,8 @@ struct MeshConfig{I,VI,V,U}
     mode::MeshMode
     assignment::MeshAssignment
     boundary::BoundaryCondition
+    enlarge::Float64
+    gpu::Bool
 
     units::U
     dim::I
@@ -53,6 +55,8 @@ function Base.show(io::IO, config::MeshConfig)
                          mode: $(config.mode)
             assignment method: $(config.assignment)
            Boundary Condition: $(config.boundary)
+           enlarge: $(config.enlarge)
+           gpu: $(config.gpu)
                         units: $(config.units)
               Number of Cells: $(config.N)
        Number of ghost points: $(config.NG)
@@ -77,6 +81,7 @@ function MeshConfig(units = nothing;
     zMin = isnothing(units) ? -1.0 : -1.0 * units[1],
     zMax = isnothing(units) ? +1.0 : +1.0 * units[1],
     dim = 3,
+    gpu = false,
 )
     Δx = (xMax-xMin)/Nx
     Δy = (yMax-yMin)/Ny
@@ -88,7 +93,9 @@ function MeshConfig(units = nothing;
     N = SVector(Nx, Ny, Nz)
     Len = N .+ (2 * NG)
     return MeshConfig(
-        mode,assignment,boundary,units,dim,NG,
+        mode,assignment,boundary,
+        1.0, gpu,
+        units,dim,NG,
         Δ[1:dim],Min[1:dim],Max[1:dim],N[1:dim],Len[1:dim],
     )
 end
@@ -102,13 +109,17 @@ function MeshConfig(e::Extent, units = nothing;
     Nz = 10,
     NG = 1,
     dim = 3,
+    enlarge = 1.0,
+    gpu = false,
 )
-    xMin = e.xMin
-    yMin = e.yMin
-    zMin = e.zMin
-    xMax = e.xMax
-    yMax = e.yMax
-    zMax = e.zMax
+    # Make sure that backward assignment are not affected by boundaries, at least in 3-element laplace conv
+    E = e * enlarge
+    xMin = E.xMin
+    yMin = E.yMin
+    zMin = E.zMin
+    xMax = E.xMax
+    yMax = E.yMax
+    zMax = E.zMax
     Δx = (xMax-xMin)/Nx
     Δy = (yMax-yMin)/Ny
     Δz = (zMax-zMin)/Nz
@@ -119,7 +130,9 @@ function MeshConfig(e::Extent, units = nothing;
     N = SVector(Nx, Ny, Nz)
     Len = N .+ (2 * NG)
     return MeshConfig(
-        mode,assignment,boundary,units,dim,NG,
+        mode,assignment,boundary,
+        enlarge, gpu,
+        units,dim,NG,
         Δ[1:dim],Min[1:dim],Max[1:dim],N[1:dim],Len[1:dim],
     )
 end
@@ -251,12 +264,10 @@ function MeshCartesianStatic(particles::StructArray, units = nothing;
     NG = 1,
     assign = true,
     gpu = false,
+    enlarge = 2.01, 
     kw...
 )
-    ratio = 2.01 # Make sure that backward assignment are not affected by boundaries, at least in 3-element laplace conv
-    e = extent(particles) * ratio
-
-    config = MeshConfig(e, units; Nx, Ny, Nz, NG, mode, assignment, boundary, kw...)
+    config = MeshConfig(extent(particles), units; Nx, Ny, Nz, NG, mode, assignment, boundary, enlarge, gpu, kw...)
     mesh = __MeshCartesianStatic(config, particles, mode, units; gpu)
 
     if assign
