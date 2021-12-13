@@ -81,6 +81,16 @@ function particle2mesh(mesh::AbstractMesh, pos::AbstractArray, rho::Number, symb
     end
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Assign mesh data by mass assignment shemes
+
+## Example
+```julia
+assignmesh(data, m, :Mass, :rho)
+```
+"""
 Base.@propagate_inbounds function assignmesh(particles::StructArray, mesh::MeshCartesianStatic, symbolParticle::Symbol, symbolMesh::Symbol)
     config = mesh.config
     getproperty(mesh, symbolMesh) .*= 0.0
@@ -123,7 +133,17 @@ function mesh2particle(mesh::AbstractMesh, pos::AbstractArray, symbolMesh::Symbo
     return sum([getproperty(mesh, symbolMesh)[id[i][1], id[j][2], id[k][3]] * r[i][1] * r[j][2] * r[k][3] for i in 1:3, j in 1:3, k in 1:3])
 end
 
-Base.Base.@propagate_inbounds function assignparticle(particles::StructArray, mesh::MeshCartesianStatic, symbolParticle::Symbol, symbolMesh::Symbol)
+"""
+$(TYPEDSIGNATURES)
+
+Assign particle data by inverse mass assignment.
+
+## Examples
+```julia
+assignparticle(data, m, :Acc, :acc)
+```
+"""
+Base.@propagate_inbounds function assignparticle(particles::StructArray, mesh::MeshCartesianStatic, symbolParticle::Symbol, symbolMesh::Symbol)
     config = mesh.config
     block = ceil(Int64, length(particles) / Threads.nthreads())
     Threads.@threads for k in 1:Threads.nthreads()

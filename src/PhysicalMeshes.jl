@@ -7,6 +7,7 @@ using LinearAlgebra
 using StaticArrays
 #using Decimals
 using StructArrays
+using DocStringExtensions
 
 @reexport using PhysicalParticles
 
@@ -137,7 +138,5 @@ include("Tetrahedron.jl")
 include("mesh/Mesh.jl")
 include("mesh/particle2mesh.jl")
 include("mesh/tools.jl")
-
-include("PrettyPrinting.jl")
 
 end

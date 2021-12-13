@@ -9,10 +9,9 @@ function orient_kernel(a::AbstractPoint2D, b::AbstractPoint2D, c::AbstractPoint2
 end
 
 """
-function orient(a::AbstractPoint2D, b::AbstractPoint2D, c::AbstractPoint2D)
-
-    Computes the orient.
-    The result is also a rough approximation of twice the signed area.
+$(TYPEDSIGNATURES)
+Computes the orient.
+The result is also a rough approximation of twice the signed area.
 """
 function orient(a::AbstractPoint2D, b::AbstractPoint2D, c::AbstractPoint2D)
     z = orient_kernel(a, b, c)
@@ -25,10 +24,9 @@ function orient_exact(a::AbstractPoint2D, b::AbstractPoint2D, c::AbstractPoint2D
 end=#
 
 """
-function orient(a::AbstractPoint3D, b::AbstractPoint3D, c::AbstractPoint3D)
-
-    Computes the orient.
-    The result is also a rough approximation of twice the signed area.
+$(TYPEDSIGNATURES)
+Computes the orient.
+The result is also a rough approximation of twice the signed area.
 """
 function orient(a::AbstractPoint3D, b::AbstractPoint3D, c::AbstractPoint3D)
     acx = a.x - c.x
@@ -75,10 +73,9 @@ function orient_kernel(a::AbstractPoint3D, b::AbstractPoint3D, c::AbstractPoint3
 end
 
 """
-function orient(a::AbstractPoint3D, b::AbstractPoint3D, c::AbstractPoint3D, d::AbstractPoint3D)
-
-    Computes the orient.
-    The result is also a rough approximation of six times the signed volume.
+$(TYPEDSIGNATURES)
+Computes the orient.
+The result is also a rough approximation of six times the signed volume.
 """
 function orient(a::AbstractPoint3D, b::AbstractPoint3D, c::AbstractPoint3D, d::AbstractPoint3D)
     return orient_kernel(a, b, c, d)

@@ -1,9 +1,6 @@
 """
-    struct Cube2D{T<:Number} <: AbstractCube2D{T}
-
-## Fields
-- top::PVector2D{T}
-- below::PVector2D{T}
+$(TYPEDEF)
+$(TYPEDFIELDS)
 
 ## Examples
 ```julia
@@ -20,11 +17,8 @@ struct Cube2D{T<:Number} <: AbstractCube2D{T}
 end
 
 """
-    struct Cube{T<:Number} <: AbstractCube3D{T}
-
-## Fields
-- top::PVector{T}
-- below::PVector{T}
+$(TYPEDEF)
+$(TYPEDFIELDS)
 
 ## Examples
 ```julia
@@ -45,8 +39,7 @@ Cube(top::PVector2D{T}, below::PVector2D{T}) where T<:Number = Cube2D(top, below
 #! Area and Volume is signed
 
 """
-    area(c::AbstractCube2D)
-
+$(TYPEDSIGNATURES)
 Signed area of 2D cube
 """
 function area(c::AbstractCube2D)
@@ -55,8 +48,7 @@ function area(c::AbstractCube2D)
 end
 
 """
-    volume(c::AbstractCube3D)
-
+$(TYPEDSIGNATURES)
 Signed volume of 3D cube
 """
 function volume(c::AbstractCube3D)

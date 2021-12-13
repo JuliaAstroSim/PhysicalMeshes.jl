@@ -1,11 +1,6 @@
 """
-    struct Tetrahedron{T<:Number} <: AbstractTetrahedron{T}
-
-## Fields
-- a::PVector{T}
-- b::PVector{T}
-- c::PVector{T}
-- d::PVector{T}
+$(TYPEDEF)
+$(TYPEDFIELDS)
 
 ## Examples
 ```julia
@@ -47,15 +42,13 @@ struct Tetrahedron{T<:Number} <: AbstractTetrahedron{T}
 end
 
 """
-    centroid(t::AbstractTetrahedron)
-
+$(TYPEDSIGNATURES)
 Averaged position center of the tetrahedron
 """
 centroid(t::AbstractTetrahedron) = (t.a + t.b + t.c + t.d) / 4.0
 
 """
-    circumcenter(t::AbstractTetrahedron)
-
+$(TYPEDSIGNATURES)
 Return the circumsphere center of tetrahedron
 """
 circumcenter(t::AbstractTetrahedron) = circumcenter(t.a, t.b, t.c, t.d)
@@ -63,8 +56,7 @@ circumcenter(t::AbstractTetrahedron) = circumcenter(t.a, t.b, t.c, t.d)
 #circumcenter_exact(t::AbstractTetrahedron) = circumcenter_exact(t.a, t.b, t.c, t.d)
 
 """
-insphere(t::AbstractTetrahedron, p::AbstractPoint3D)
-
+$(TYPEDSIGNATURES)
 Test whether a point locates inside the circumsphere center of tetrahedron. Return a trait (`Interior`, `Exterior`, or `OnEdge`)
 """
 insphere(t::AbstractTetrahedron, p::AbstractPoint3D) = insphere(t.a, t.b, t.c, t.d, p)
@@ -72,26 +64,23 @@ insphere(t::AbstractTetrahedron, p::AbstractPoint3D) = insphere(t.a, t.b, t.c, t
 #insphere_exact(t::AbstractTetrahedron, p::AbstractPoint3D) = insphere_exact(t.a, t.b, t.c, t.d, p)
 
 """
-    orient(t::AbstractTetrahedron)
-
-Return a positive number if positively oriented.
-Return a negative number if negatively oriented.
-Return zero if not oriented (indicating the tetrahedron has zero volume)
+$(TYPEDSIGNATURES)
+- Return a positive number if positively oriented.
+- Return a negative number if negatively oriented.
+- Return zero if not oriented (indicating the tetrahedron has zero volume)
 """
 orient(t::AbstractTetrahedron) = orient(t.a, t.b, t.c, t.d)
 
 #orient_exact(t::AbstractTetrahedron) = orient_exact(t.a, t.b, t.c, t.d)
 
 """
-    volume(t::AbstractTetrahedron)
-
+$(TYPEDSIGNATURES)
 Unsigned volume of tetrahedron
 """
 volume(t::AbstractTetrahedron) = norm(orient(t)) / 6.0
 
 """
-    orientation(t::AbstractTetrahedron)
-
+$(TYPEDSIGNATURES)
 Orientation of tetrahedron. Return a trait (`NegativelyOriented`, `PositivelyOriented`, or `UnOriented`)
 """
 function orientation(t::AbstractTetrahedron)

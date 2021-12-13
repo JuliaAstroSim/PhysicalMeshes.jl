@@ -1,26 +1,6 @@
 """
-    struct MeshConfig
-
-## Fields
-- `mode`: the way of sampling physical properties
-  - `CellMode`: properties are located in cell centers. `Nx × Ny × Nz` data points in total.
-  - `VertexMode`: properties are located on grid points. `(Nx + 1) × (Ny + 1) × (Nz + 1)` data points in total.
-- `assignment`: mesh assignment algorithm
-  - `NGP`: nearest grid point
-  - `CIC`: cloud in cell
-  - `TSC`: triangular shaped cloud
-- `boundary`: boundary conditions
-  - `Periodic`
-  - `Vacuum`
-  - `Dirichlet`
-- `units`: support `nothing`, `uAstro`, `uSI`, `uGadget2`, `uCGS`
-- `dim`: dimension of the mesh
-- `NG`: Number of boundary ghost cells
-- `Δ`: mesh resolution in each direction
-- `Min`: minimum coordinate of each direction, not including ghost cells. Corresponds to cell coordinates in cell mode, and vertex coordinates in vertex mode.
-- `Max`: maximum coordinate of each direction, not including ghost cells. Corresponds to cell coordinates in cell mode, and vertex coordinates in vertex mode.
-- `N`: number of cells in each direction, not including ghost cells. In `VertexMode`, there are N+1 vertices in each direction
-- `Len`: total number of cells in each direction, including ghost cells.
+$(TYPEDEF)
+$(TYPEDFIELDS)
 
 ## Constructors
 - `MeshConfig(units = nothing; kw...)`: all fields can be modified by keywords. Try construct one to see default values
@@ -29,21 +9,48 @@
 For more instructions, see the documentation: https://juliaastrosim.github.io/PhysicalMeshes.jl/dev
 """
 struct MeshConfig{I,VI,V,U}
+    """
+    the way of sampling physical properties
+    - `CellMode`: properties are located in cell centers. `Nx × Ny × Nz` data points in total.
+    - `VertexMode`: properties are located on grid points. `(Nx + 1) × (Ny + 1) × (Nz + 1)` data points in total.
+    """
     mode::MeshMode
+    """
+    mesh assignment algorithm
+    - `NGP`: nearest grid point
+    - `CIC`: cloud in cell
+    - `TSC`: triangular shaped cloud
+    """
     assignment::MeshAssignment
+    """
+    boundary conditions
+    - `Periodic`
+    - `Vacuum`
+    - `Dirichlet`
+    """
     boundary::BoundaryCondition
+    "Enlarge the mesh"
     enlarge::Float64
+    "If `true`, store mesh data on GPU"
     gpu::Bool
 
+    "support `nothing`, `uAstro`, `uSI`, `uGadget2`, `uCGS`"
     units::U
+    "dimension of the mesh"
     dim::I
+    "Number of boundary ghost cells"
     NG::I
 
     # Vector info
+    "mesh resolution in each direction"
     Δ::V
+    "minimum coordinate of each direction, not including ghost cells. Corresponds to cell coordinates in cell mode, and vertex coordinates in vertex mode."
     Min::V
+    "maximum coordinate of each direction, not including ghost cells. Corresponds to cell coordinates in cell mode, and vertex coordinates in vertex mode."
     Max::V
+    "number of cells in each direction, not including ghost cells. In `VertexMode`, there are N+1 vertices in each direction"
     N::VI
+    "total number of cells in each direction, including ghost cells."
     Len::VI
 end
 
@@ -138,23 +145,8 @@ function MeshConfig(e::Extent, units = nothing;
 end
 
 """
-    struct MeshCartesianStatic
-
-## Fields
-- `config::MeshConfig`
-- `pos`
-- `vel`
-- `acc`
-- `e`
-- `rho`
-- `phi`
-- `B`
-- `E`
-- `U`
-- `F`
-- `G`
-- `H`
-- `J`
+$(TYPEDEF)
+$(TYPEDFIELDS)
 
 ## Constructors
 keywords are passed into `MeshConfig`

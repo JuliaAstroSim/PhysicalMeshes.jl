@@ -1,9 +1,6 @@
 """
-    struct Line2D{T<:Number} <: AbstractLine2D{T}
-
-## Fields
-- a::PVector2D{T}
-- b::PVector2D{T}
+$(TYPEDEF)
+$(TYPEDFIELDS)
 
 ## Examples
 ```julia
@@ -41,11 +38,8 @@ end
 @inline /(m::Line2D, h::Number) = Line2D(m.a / h, m.b / h)
 
 """
-    struct Line{T<:Number} <: AbstractLine3D{T}
-
-## Fields
-- a::PVector{T}
-- b::PVector{T}
+$(TYPEDEF)
+$(TYPEDFIELDS)
 
 ## Examples
 ```julia
@@ -87,29 +81,25 @@ Line(a::AbstractPoint2D{T}, b::AbstractPoint2D{T}) where T<:Number = Line2D(a,b)
 # General functions
 
 """
-    len(line::AbstractLine)
-
+$(TYPEDSIGNATURES)
 Length of line
 """
 len(line::AbstractLine) = norm(line.a - line.b)
 
 """
-    centroid(line::AbstractLine)
-
+$(TYPEDSIGNATURES)
 Average position of line vertices.
 """
 centroid(line::AbstractLine) = (line.a + line.b) * 0.5
 
 """
-    center(line::AbstractLine) = centroid(line)
-
+$(TYPEDSIGNATURES)
 Average position of line vertices.
 """
 center(line::AbstractLine) = centroid(line)
 
 """
-    midpoint(line::AbstractLine) = centroid(line)
-
+$(TYPEDSIGNATURES)
 Average position of line vertices.
 """
 midpoint(line::AbstractLine) = centroid(line)
