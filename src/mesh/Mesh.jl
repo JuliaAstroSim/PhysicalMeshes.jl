@@ -107,43 +107,6 @@ function MeshConfig(units = nothing;
     )
 end
 
-function MeshConfig(e::Extent, units = nothing;
-    mode = VertexMode(),
-    assignment = CIC(),
-    boundary = Periodic(),
-    Nx = 10,
-    Ny = 10,
-    Nz = 10,
-    NG = 1,
-    dim = 3,
-    enlarge = 1.0,
-    gpu = false,
-)
-    # Make sure that backward assignment are not affected by boundaries, at least in 3-element laplace conv
-    E = e * enlarge
-    xMin = E.xMin
-    yMin = E.yMin
-    zMin = E.zMin
-    xMax = E.xMax
-    yMax = E.yMax
-    zMax = E.zMax
-    Δx = (xMax-xMin)/Nx
-    Δy = (yMax-yMin)/Ny
-    Δz = (zMax-zMin)/Nz
-
-    Δ = SVector(Δx, Δy, Δz)
-    Min = SVector(xMin, yMin, zMin)
-    Max = SVector(xMax, yMax, zMax)
-    N = SVector(Nx, Ny, Nz)
-    Len = N .+ (2 * NG)
-    return MeshConfig(
-        mode,assignment,boundary,
-        enlarge, gpu,
-        units,dim,NG,
-        Δ[1:dim],Min[1:dim],Max[1:dim],N[1:dim],Len[1:dim],
-    )
-end
-
 """
 $(TYPEDEF)
 $(TYPEDFIELDS)
@@ -157,7 +120,7 @@ keywords are passed into `MeshConfig`
 
 For more instructions, see the documentation: https://juliaastrosim.github.io/PhysicalMeshes.jl/dev
 """
-struct MeshCartesianStatic{I, VI, V, U, D, POS, VEL, ACC, _e, RHO, PHI, _B, _E, _U, _F, _G, _H, _J} <: AbstractMesh{U}
+struct MeshCartesianStatic{I, VI, V, U, D, POS, VEL, ACC, _e, RHO, PHI, _B, _E, _j, _U, _F, _G, _H, _J} <: AbstractMesh{U}
     config::MeshConfig{I,VI,V,U}
     data::D
 
@@ -170,6 +133,7 @@ struct MeshCartesianStatic{I, VI, V, U, D, POS, VEL, ACC, _e, RHO, PHI, _B, _E, 
 
     B::_B       # magnetic field
     E::_E       # eletric field
+    j::_j       # eletrical circuit field
 
     # CFD
     U::_U
@@ -219,7 +183,7 @@ function __MeshCartesianStatic(config::MeshConfig, particles, ::VertexMode, unit
             config,
             cu(particles),
             cu(pos), cu(vel), cu(acc), cu(e), cu(rho), cu(phi),
-            nothing, nothing,
+            nothing, nothing, nothing,
             nothing, nothing, nothing, nothing, nothing,
         )
     else
@@ -227,7 +191,7 @@ function __MeshCartesianStatic(config::MeshConfig, particles, ::VertexMode, unit
             config,
             particles,
             pos, vel, acc, e, rho, phi,
-            nothing, nothing,
+            nothing, nothing, nothing,
             nothing, nothing, nothing, nothing, nothing,
         )
     end
@@ -237,15 +201,37 @@ function __MeshCartesianStatic(config::MeshConfig, particles, ::CellMode, units 
 
 end
 
+function __MeshCartesianStatic(config::MeshConfig, ::Nothing, ::VertexMode, units = nothing; cfd::Bool = true, mhd::Bool = false, kw...)
+
+end
+
+function __MeshCartesianStatic(config::MeshConfig, ::Nothing, ::CellMode, units = nothing; cfd::Bool = true, mhd::Bool = false, kw...)
+
+end
+
 function MeshCartesianStatic(config::MeshConfig, particles, units = nothing; kw...)
     return __MeshCartesianStatic(config, particles, config.mode, units; kw...)
 end
 
+"""
+$(TYPEDSIGNATURES)
+Construct a static Cartesian mesh from nothing.
+This will initiate data for CFD or MHD.
+
+## Keywords
+- `cfd::Bool`. If `true`, initiate `U`, `F`, `G`, `H`, `J` for different dimensions. Default is `true`
+- `mhd::Bool`. If `true`, initiate `B`, `E`, and `j`. Default is `false`
+"""
 function MeshCartesianStatic(::Nothing, units = nothing; gpu = false, kw...)
     config = MeshConfig(units; kw...)
     return __MeshCartesianStatic(config, nothing, config.mode, units; gpu)
 end
 
+"""
+$(TYPEDSIGNATURES)
+Construct a static Cartesian mesh containing particles.
+The extent is enlarge by keyword argument `enlarge=2.01`.
+"""
 function MeshCartesianStatic(particles::StructArray, units = nothing;
     mode = VertexMode(),
     assignment = CIC(),
@@ -254,12 +240,29 @@ function MeshCartesianStatic(particles::StructArray, units = nothing;
     Ny = 10,
     Nz = 10,
     NG = 1,
+    xMin = nothing,
+    xMax = nothing,
+    yMin = nothing,
+    yMax = nothing,
+    zMin = nothing,
+    zMax = nothing,
     assign = true,
     gpu = false,
-    enlarge = 2.01, 
+    enlarge = 2.01,
     kw...
 )
-    config = MeshConfig(extent(particles), units; Nx, Ny, Nz, NG, mode, assignment, boundary, enlarge, gpu, kw...)
+    E = extent(particles) * enlarge
+    config = MeshConfig(units;
+        Nx, Ny, Nz, NG,
+        xMin = isnothing(xMin) ? E.xMin : xMin,
+        xMax = isnothing(xMax) ? E.xMax : xMax,
+        yMin = isnothing(yMin) ? E.yMin : yMin,
+        yMax = isnothing(yMax) ? E.yMax : yMax,
+        zMin = isnothing(zMin) ? E.zMin : zMin,
+        zMax = isnothing(zMax) ? E.zMax : zMax,
+        mode, assignment, boundary, gpu,
+        kw...
+    )
     mesh = __MeshCartesianStatic(config, particles, mode, units; gpu)
 
     if assign
