@@ -156,21 +156,22 @@ function Base.show(io::IO, mesh::MeshCartesianStatic)
     )
 end
 
-function __MeshCartesianStatic(config::MeshConfig, particles, ::VertexMode, units = nothing; gpu = false)
+function __MeshCartesianStatic(config::MeshConfig, particles, ::VertexMode, units = nothing;
+    gpu = false,
+    cfd = false,
+    mhd = false,
+)
     a = [collect(config.Min[i] - config.Δ[i] * config.NG:config.Δ[i]:config.Max[i] + 1.000001*config.Δ[i] * config.NG) for i in 1:config.dim]
-
     iter = Iterators.product(a...)
-
-    uLength = getuLength(units)
 
     zv = ZeroValue(units)
 
     if config.dim == 1 # StructArray is empty for eltype
-        pos = [PVector(p..., uLength) for p in iter]
+        pos = [PVector(p...) for p in iter]
         vel = [zv.vel for p in iter]
         acc = [zv.acc for p in iter]
     else
-        pos = StructArray(PVector(p..., uLength) for p in iter)
+        pos = StructArray(PVector(p...) for p in iter)
         vel = StructArray(zv.vel for p in iter)
         acc = StructArray(zv.acc for p in iter)
     end
@@ -201,14 +202,6 @@ function __MeshCartesianStatic(config::MeshConfig, particles, ::CellMode, units 
 
 end
 
-function __MeshCartesianStatic(config::MeshConfig, ::Nothing, ::VertexMode, units = nothing; cfd::Bool = true, mhd::Bool = false, kw...)
-
-end
-
-function __MeshCartesianStatic(config::MeshConfig, ::Nothing, ::CellMode, units = nothing; cfd::Bool = true, mhd::Bool = false, kw...)
-
-end
-
 function MeshCartesianStatic(config::MeshConfig, particles, units = nothing; kw...)
     return __MeshCartesianStatic(config, particles, config.mode, units; kw...)
 end
@@ -222,9 +215,9 @@ This will initiate data for CFD or MHD.
 - `cfd::Bool`. If `true`, initiate `U`, `F`, `G`, `H`, `J` for different dimensions. Default is `true`
 - `mhd::Bool`. If `true`, initiate `B`, `E`, and `j`. Default is `false`
 """
-function MeshCartesianStatic(::Nothing, units = nothing; gpu = false, kw...)
+function MeshCartesianStatic(units = nothing; gpu = false, cfd = false, mhd = false, kw...)
     config = MeshConfig(units; kw...)
-    return __MeshCartesianStatic(config, nothing, config.mode, units; gpu)
+    return __MeshCartesianStatic(config, nothing, config.mode, units; gpu, cfd, mhd)
 end
 
 """

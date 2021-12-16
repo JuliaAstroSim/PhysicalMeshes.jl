@@ -96,20 +96,22 @@ Base.@propagate_inbounds function assignmesh(particles::StructArray, mesh::MeshC
     getproperty(mesh, symbolMesh) .*= 0.0
 
     #TODO this is unsafe assign
-    block = ceil(Int64, length(particles) / Threads.nthreads())
-    Threads.@threads for k in 1:Threads.nthreads()
-        if k > length(particles)
-            continue
-        end
+    #Threads.@threads for k in 1:Threads.nthreads()
+    #    Head, Tail = split_block(length(particles), k, Threads.nthreads())
+    #    for i in Head:Tail
+    #        rho = getproperty(particles, symbolParticle)[i] / prod(config.Δ)
+    #        if is_inbound(particles.Pos[i], config)
+    #            pos = SVector(particles.Pos[i])
+    #            particle2mesh(mesh, pos, rho, symbolMesh, config.mode, config.assignment)
+    #        end
+    #    end
+    #end
 
-        Head = block * (k-1) + 1
-        Tail = block * k
-        for i in Head:Tail
-            rho = getproperty(particles, symbolParticle)[i] / prod(config.Δ)
-            if is_inbound(particles.Pos[i], config)
-                pos = SVector(particles.Pos[i])
-                particle2mesh(mesh, pos, rho, symbolMesh, config.mode, config.assignment)
-            end
+    for i in eachindex(particles)
+        rho = getproperty(particles, symbolParticle)[i] / prod(config.Δ)
+        if is_inbound(particles.Pos[i], config)
+            pos = SVector(particles.Pos[i])
+            particle2mesh(mesh, pos, rho, symbolMesh, config.mode, config.assignment)
         end
     end
 
@@ -145,14 +147,8 @@ assignparticle(data, m, :Acc, :acc)
 """
 Base.@propagate_inbounds function assignparticle(particles::StructArray, mesh::MeshCartesianStatic, symbolParticle::Symbol, symbolMesh::Symbol)
     config = mesh.config
-    block = ceil(Int64, length(particles) / Threads.nthreads())
     Threads.@threads for k in 1:Threads.nthreads()
-        if k > length(particles)
-            continue
-        end
-
-        Head = block * (k-1) + 1
-        Tail = block * k
+        Head, Tail = split_block(length(particles), k, Threads.nthreads())
         for i in Head:Tail
             if is_inbound(particles.Pos[i], config)
                 pos = SVector(particles.Pos[i])
