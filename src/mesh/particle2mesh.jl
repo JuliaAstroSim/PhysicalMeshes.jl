@@ -1,9 +1,9 @@
-function NGPinfo(mesh::AbstractMesh, pos::AbstractArray)
+function NGPinfo(mesh::AbstractMesh, pos::AbstractVector{T}) where T<:Number
     config = mesh.config
     id = round(Int, (pos .- config.Min) ./ config.Δ) .+ 1 .+ config.NG
 end
 
-function CICinfo(mesh::AbstractMesh, pos::AbstractArray)
+function CICinfo(mesh::AbstractMesh, pos::AbstractVector{T}) where T<:Number
     config = mesh.config
     # Here, left means smaller coordinate value in that dimension
     # find the index of nearest left and right vertex
@@ -21,7 +21,7 @@ function CICinfo(mesh::AbstractMesh, pos::AbstractArray)
     return id, r
 end
 
-function TSCinfo(mesh::AbstractMesh, pos::AbstractArray)
+function TSCinfo(mesh::AbstractMesh, pos::AbstractVector{T}) where T<:Number
     config = mesh.config
     idl = floor.(Int, (pos .- config.Min) ./ config.Δ .- 0.5) .+ 1 .+ config.NG
     idm = idl .+ 1
@@ -61,20 +61,20 @@ end
 
 outbound_list(m::MeshCartesianStatic) = outbound_list(m.data.Pos, m)
 
-function particle2mesh(mesh::AbstractMesh, pos::AbstractArray, rho::Number, symbolMesh::Symbol, ::VertexMode, ::NGP)
+function particle2mesh(mesh::AbstractMesh, pos::AbstractVector{T}, rho::Number, symbolMesh::Symbol, ::VertexMode, ::NGP) where T<:Number
     # Find the nearest vertex and assign with rho
     id = NGPinfo(mesh, pos)
     getproperty(mesh, symbolMesh)[id...] += rho
 end
 
-function particle2mesh(mesh::AbstractMesh, pos::AbstractArray, rho::Number, symbolMesh::Symbol, ::VertexMode, ::CIC)
+function particle2mesh(mesh::AbstractMesh, pos::AbstractVector{T}, rho::Number, symbolMesh::Symbol, ::VertexMode, ::CIC) where T<:Number
     id, r = CICinfo(mesh, pos)
     for i in 1:2, j in 1:2, k in 1:2
         @inbounds getproperty(mesh, symbolMesh)[id[i][1], id[j][2], id[k][3]] += rho * r[i][1] * r[j][2] * r[k][3]
     end
 end
 
-function particle2mesh(mesh::AbstractMesh, pos::AbstractArray, rho::Number, symbolMesh::Symbol, ::VertexMode, ::TSC)
+function particle2mesh(mesh::AbstractMesh, pos::AbstractVector{T}, rho::Number, symbolMesh::Symbol, ::VertexMode, ::TSC) where T<:Number
     id, r = TSCinfo(mesh, pos)
     for i in 1:3, j in 1:3, k in 1:3
         @inbounds getproperty(mesh, symbolMesh)[id[i][1], id[j][2], id[k][3]] += rho * r[i][1] * r[j][2] * r[k][3]
@@ -120,20 +120,22 @@ end
 
 assignmesh(m::MeshCartesianStatic) = assignmesh(m.data, m, :Mass, :rho)
 
-function mesh2particle(mesh::AbstractMesh, pos::AbstractArray, symbolMesh::Symbol, ::VertexMode, ::NGP)
+function mesh2particle(mesh::AbstractMesh, pos::AbstractVector{T}, symbolMesh::Symbol, ::VertexMode, ::NGP) where T<:Number
     id = NGPinfo(mesh, pos)
     return getproperty(mesh, symbolMesh)[id...]
 end
 
-function mesh2particle(mesh::AbstractMesh, pos::AbstractArray, symbolMesh::Symbol, ::VertexMode, ::CIC)
+function mesh2particle(mesh::AbstractMesh, pos::AbstractVector{T}, symbolMesh::Symbol, ::VertexMode, ::CIC) where T<:Number
     id, r = CICinfo(mesh, pos)
     return sum([getproperty(mesh, symbolMesh)[id[i][1], id[j][2], id[k][3]] * r[i][1] * r[j][2] * r[k][3] for i in 1:2, j in 1:2, k in 1:2])
 end
 
-function mesh2particle(mesh::AbstractMesh, pos::AbstractArray, symbolMesh::Symbol, ::VertexMode, ::TSC)
+function mesh2particle(mesh::AbstractMesh, pos::AbstractVector{T}, symbolMesh::Symbol, ::VertexMode, ::TSC) where T<:Number
     id, r = TSCinfo(mesh, pos)
     return sum([getproperty(mesh, symbolMesh)[id[i][1], id[j][2], id[k][3]] * r[i][1] * r[j][2] * r[k][3] for i in 1:3, j in 1:3, k in 1:3])
 end
+
+mesh2particle(mesh::AbstractMesh, pos::AbstractPoint, args...) = mesh2particle(mesh, SVector(pos), args...)
 
 """
 $(TYPEDSIGNATURES)
