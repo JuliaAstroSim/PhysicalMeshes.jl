@@ -1,7 +1,7 @@
 name = "PhysicalMeshes"
 uuid = "97d9904f-034f-4fb7-aeaa-03a173434233"
 authors = ["islent <leoislent@gmail.com>"]
-version = "0.1.0"
+version = "0.1.1"
 
 [deps]
 CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
