@@ -60,8 +60,13 @@ export
     insphere,
     #insphere_exact,
 
+    interior,
+    exterior,
+
     #decimal,
     #floatnumber,
+    # Sphere
+    Sphere,
 
     # Line
     AbstractLine,
@@ -129,6 +134,8 @@ include("Traits.jl")
 include("core/orient.jl")
 include("core/circumcenter.jl")
 include("core/predicates.jl")
+
+include("Sphere.jl")
 
 include("Line.jl")
 include("Cube.jl")

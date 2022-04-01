@@ -36,6 +36,58 @@ end
 
 Cube(top::PVector2D{T}, below::PVector2D{T}) where T<:Number = Cube2D(top, below)
 
+"""
+$(TYPEDSIGNATURES)
+Return `true` if `p` is inside the cube.
+Otherwise (including on the edge), return `false`.
+"""
+function interior(c::Cube2D, p::AbstractPoint2D)
+    if (c.below.x < p.x < c.top.x) && (c.below.y < p.y < c.top.y)
+        return true
+    else
+        return false
+    end
+end
+
+"""
+$(TYPEDSIGNATURES)
+Return `true` if `p` is inside the cube.
+Otherwise (including on the edge), return `false`.
+"""
+function interior(c::Cube, p::AbstractPoint3D)
+    if (c.below.x < p.x < c.top.x) && (c.below.y < p.y < c.top.y) && (c.below.z < p.z < c.top.z)
+        return true
+    else
+        return false
+    end
+end
+
+"""
+$(TYPEDSIGNATURES)
+Return `true` if `p` is outside the cube.
+Otherwise (including on the edge), return `false`.
+"""
+function exterior(c::Cube2D, p::AbstractPoint2D)
+    if (c.below.x <= p.x <= c.top.x) && (c.below.y <= p.y <= c.top.y)
+        return false
+    else
+        return true
+    end
+end
+
+"""
+$(TYPEDSIGNATURES)
+Return `true` if `p` is outside the cube.
+Otherwise (including on the edge), return `false`.
+"""
+function exterior(c::Cube, p::AbstractPoint3D)
+    if (c.below.x <= p.x <= c.top.x) && (c.below.y <= p.y <= c.top.y) && (c.below.z <= p.z <= c.top.z)
+        return false
+    else
+        return true
+    end
+end
+
 #! Area and Volume is signed
 
 """

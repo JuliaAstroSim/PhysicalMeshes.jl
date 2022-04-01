@@ -25,6 +25,8 @@ circumcenter
 ```@docs
 incircle
 insphere
+interior
+exterior
 ```
 
 ## Mesh
