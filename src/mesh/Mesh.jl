@@ -120,27 +120,29 @@ keywords are passed into `MeshConfig`
 
 For more instructions, see the documentation: https://juliaastrosim.github.io/PhysicalMeshes.jl/dev
 """
-struct MeshCartesianStatic{I, VI, V, U, D, POS, VEL, ACC, _e, RHO, PHI, _B, _E, _j, _U, _F, _G, _H, _J} <: AbstractMesh{U}
+struct MeshCartesianStatic{I, VI, V, U, D, POS, VEL, ACC, _e, RHO, PHI, _B, _E, _j} <: AbstractMesh{U}
     config::MeshConfig{I,VI,V,U}
     data::D
 
     pos::POS
     vel::VEL
     acc::ACC
-    e::_e        # energy
-    rho::RHO    # density
-    phi::PHI    # potential
+    "energy density"
+    e::_e
+    "density"
+    rho::RHO
+    "potential"
+    phi::PHI
 
-    B::_B       # magnetic field
-    E::_E       # eletric field
-    j::_j       # eletrical circuit field
-
-    # CFD
-    U::_U
-    F::_F
-    G::_G
-    H::_H
-    J::_J
+    # MHD
+    "magnetic field"
+    B::_B
+    "eletric field"
+    E::_E
+    "charge density"
+    rho_e
+    "eletrical circuit field"
+    j::_j
 end
 
 function Base.show(io::IO, mesh::MeshCartesianStatic)
@@ -158,7 +160,6 @@ end
 
 function __MeshCartesianStatic(config::MeshConfig, particles, ::VertexMode, units = nothing;
     gpu = false,
-    cfd = false,
     mhd = false,
 )
     a = [collect(config.Min[i] - config.Δ[i] * config.NG:config.Δ[i]:config.Max[i] + 1.000001*config.Δ[i] * config.NG) for i in 1:config.dim]
@@ -184,16 +185,14 @@ function __MeshCartesianStatic(config::MeshConfig, particles, ::VertexMode, unit
             config,
             cu(particles),
             cu(pos), cu(vel), cu(acc), cu(e), cu(rho), cu(phi),
-            nothing, nothing, nothing,
-            nothing, nothing, nothing, nothing, nothing,
+            nothing, nothing, nothing, nothing,
         )
     else
         return MeshCartesianStatic(
             config,
             particles,
             pos, vel, acc, e, rho, phi,
-            nothing, nothing, nothing,
-            nothing, nothing, nothing, nothing, nothing,
+            nothing, nothing, nothing, nothing,
         )
     end
 end
@@ -209,15 +208,13 @@ end
 """
 $(TYPEDSIGNATURES)
 Construct a static Cartesian mesh from nothing.
-This will initiate data for CFD or MHD.
 
 ## Keywords
-- `cfd::Bool`. If `true`, initiate `U`, `F`, `G`, `H`, `J` for different dimensions. Default is `true`
-- `mhd::Bool`. If `true`, initiate `B`, `E`, and `j`. Default is `false`
+- `mhd::Bool`. If `true`, initiate `B`, `E`, `rho_e` and `j`. Default is `false`
 """
-function MeshCartesianStatic(units = nothing; gpu = false, cfd = false, mhd = false, kw...)
+function MeshCartesianStatic(units = nothing; gpu = false, mhd = false, kw...)
     config = MeshConfig(units; kw...)
-    return __MeshCartesianStatic(config, nothing, config.mode, units; gpu, cfd, mhd)
+    return __MeshCartesianStatic(config, nothing, config.mode, units; gpu, mhd)
 end
 
 """
