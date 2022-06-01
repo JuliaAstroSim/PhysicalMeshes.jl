@@ -18,7 +18,7 @@ UnitfulAstro = "6112ee07-acf9-5e0f-b108-d242c714bf9f"
 
 [compat]
 CUDA = "3"
-DocStringExtensions = "0.8"
+DocStringExtensions = "0.8, 0.9"
 PhysicalParticles = "1"
 Reexport = "1"
 StaticArrays = "1"
