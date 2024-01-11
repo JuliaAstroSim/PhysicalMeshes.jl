@@ -10,6 +10,7 @@ using StructArrays
 using DocStringExtensions
 
 @reexport using PhysicalParticles
+@reexport using AstroSimBase
 
 using CUDA
 macro hascuda(expr)
@@ -42,7 +43,7 @@ export
     OnEdge, OnFace,
 
     CellMode, VertexMode,
-    Periodic, Dirichlet, Vacuum,
+    # Periodic, Dirichlet, Vacuum,
 
     NGP, CIC, TSC,
 

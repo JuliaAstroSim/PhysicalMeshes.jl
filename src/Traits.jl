@@ -30,7 +30,3 @@ struct TSC <: MeshAssignment end # triangular shaped cloud
 @inline iterate(p::T) where T <: MeshAssignment = (p,nothing)
 @inline iterate(p::T,st) where T <: MeshAssignment = nothing
 
-abstract type BoundaryCondition end
-struct Periodic <: BoundaryCondition end
-struct Dirichlet <: BoundaryCondition end
-struct Vacuum <: BoundaryCondition end

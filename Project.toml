@@ -4,6 +4,7 @@ authors = ["islent <leoislent@gmail.com>"]
 version = "0.1.1"
 
 [deps]
+AstroSimBase = "c6a34d98-f626-4d8d-b450-a3f124eaada6"
 CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
@@ -17,7 +18,7 @@ Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 UnitfulAstro = "6112ee07-acf9-5e0f-b108-d242c714bf9f"
 
 [compat]
-CUDA = "3"
+CUDA = "3, 4, 5"
 DocStringExtensions = "0.8, 0.9"
 PhysicalParticles = "1"
 Reexport = "1"
