@@ -1,4 +1,17 @@
 @testset "Mesh" begin
+    @testset "Tools" begin
+        @test zoom([1],2) == ones(Int, 2)
+        @test zoom(ones(Int, 1, 1),2) == ones(Int, 2, 2)
+        @test zoom(ones(Int, 1, 1, 1),2) == ones(Int, 2, 2, 2)
+
+        a1 = [1,2,3,4]
+        a2 = a1*a1'
+        a3 = ones(Int,4,4,4) .* reshape(a1,1,1,4)
+        @test shrink(a1,2) == [2, 4]
+        @test shrink(a2,2) == [4 8; 8 16]
+        @test shrink(a3,2) == [2 2; 2 2;;; 4 4; 4 4;;;]
+    end
+
     # data
     pos = [
         PVector(-1.0, -1.0, -1.0),

@@ -65,6 +65,7 @@ function Base.show(io::IO, config::MeshConfig)
            enlarge: $(config.enlarge)
            gpu: $(config.gpu)
                         units: $(config.units)
+           Number of Vertices: $(config.N.+1)
               Number of Cells: $(config.N)
        Number of ghost points: $(config.NG)
                           Min: $(config.Min)
@@ -83,10 +84,10 @@ function MeshConfig(units = nothing;
     NG = 0,
     xMin = isnothing(units) ? -1.0 : -1.0 * units[1],
     xMax = isnothing(units) ? +1.0 : +1.0 * units[1],
-    yMin = isnothing(units) ? -1.0 : -1.0 * units[1],
-    yMax = isnothing(units) ? +1.0 : +1.0 * units[1],
-    zMin = isnothing(units) ? -1.0 : -1.0 * units[1],
-    zMax = isnothing(units) ? +1.0 : +1.0 * units[1],
+    yMin = xMin,
+    yMax = xMax,
+    zMin = xMin,
+    zMax = xMax,
     dim = 3,
     gpu = false,
 )
@@ -162,10 +163,10 @@ function __MeshCartesianStatic(config::MeshConfig, particles, ::VertexMode, unit
     gpu = false,
     mhd = false,
 )
-    a = [collect(config.Min[i] - config.Δ[i] * config.NG:config.Δ[i]:config.Max[i] + 1.000001*config.Δ[i] * config.NG) for i in 1:config.dim]
+    a = [collect(config.Min[i] - config.Δ[i] * config.NG:config.Δ[i]:config.Max[i] + convert(eltype(config.Δ), 1.000001)*config.Δ[i] * config.NG) for i in 1:config.dim]
     iter = Iterators.product(a...)
 
-    zv = ZeroValue(units)
+    zv = ZeroValue(eltype(config.Δ), units)
 
     if config.dim == 1 # StructArray is empty for eltype
         pos = [PVector(p...) for p in iter]

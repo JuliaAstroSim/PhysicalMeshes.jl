@@ -69,6 +69,9 @@ export
     # Sphere
     Sphere,
 
+    # Tools
+    zoom, shrink,
+
     # Line
     AbstractLine,
     AbstractLine2D, AbstractLine3D,
