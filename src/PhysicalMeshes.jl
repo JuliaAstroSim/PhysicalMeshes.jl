@@ -1,5 +1,6 @@
 module PhysicalMeshes
 
+using PrecompileTools
 using Reexport
 using Unitful, UnitfulAstro
 using Distributed
@@ -149,5 +150,7 @@ include("Tetrahedron.jl")
 include("mesh/Mesh.jl")
 include("mesh/particle2mesh.jl")
 include("mesh/tools.jl")
+
+include("precompile.jl")
 
 end
