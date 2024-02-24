@@ -1,7 +1,6 @@
 module PhysicalMeshes
 
 using PrecompileTools
-using Reexport
 using Unitful, UnitfulAstro
 using Distributed
 using LinearAlgebra
@@ -10,8 +9,8 @@ using StaticArrays
 using StructArrays
 using DocStringExtensions
 
-@reexport using PhysicalParticles
-@reexport using AstroSimBase
+using PhysicalParticles
+using AstroSimBase
 
 using CUDA
 macro hascuda(expr)
