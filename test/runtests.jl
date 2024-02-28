@@ -1,5 +1,6 @@
 using Test
 using Unitful, UnitfulAstro
+import Interpolations: LinearInterpolation
 
 using PhysicalParticles
 using PhysicalMeshes
