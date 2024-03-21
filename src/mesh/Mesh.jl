@@ -8,7 +8,7 @@ $(TYPEDFIELDS)
 
 For more instructions, see the documentation: https://juliaastrosim.github.io/PhysicalMeshes.jl/dev
 """
-struct MeshConfig{I,VI,V,U}
+struct MeshConfig{I,VI,V,U,D}
     """
     the way of sampling physical properties
     - `CellMode`: properties are located in cell centers. `Nx × Ny × Nz` data points in total.
@@ -31,8 +31,8 @@ struct MeshConfig{I,VI,V,U}
     boundary::BoundaryCondition
     "Enlarge the mesh"
     enlarge::Float64
-    "If `true`, store mesh data on GPU"
-    gpu::Bool
+    "Trait type of `DeviceType`. Supported: `CPU()`, `GPU()`. Defalut: `CPU()`"
+    device::D
 
     "support `nothing`, `uAstro`, `uSI`, `uGadget2`, `uCGS`"
     units::U
@@ -63,7 +63,7 @@ function Base.show(io::IO, config::MeshConfig)
             assignment method: $(config.assignment)
            Boundary Condition: $(config.boundary)
            enlarge: $(config.enlarge)
-           gpu: $(config.gpu)
+           device: $(traitstring(config.device))
                         units: $(config.units)
            Number of Vertices: $(config.N.+1)
               Number of Cells: $(config.N)
@@ -89,7 +89,7 @@ function MeshConfig(units = nothing;
     zMin = xMin,
     zMax = xMax,
     dim = 3,
-    gpu = false,
+    device = CPU(),
 )
     Δx = (xMax-xMin)/Nx
     Δy = (yMax-yMin)/Ny
@@ -102,7 +102,7 @@ function MeshConfig(units = nothing;
     Len = N .+ (2 * NG)
     return MeshConfig(
         mode,assignment,boundary,
-        1.0, gpu,
+        1.0, device,
         units,dim,NG,
         Δ[1:dim],Min[1:dim],Max[1:dim],N[1:dim],Len[1:dim],
     )
@@ -160,7 +160,7 @@ function Base.show(io::IO, mesh::MeshCartesianStatic)
 end
 
 function __MeshCartesianStatic(config::MeshConfig, particles, ::VertexMode, units = nothing;
-    gpu = false,
+    device = CPU(),
     mhd = false,
 )
     a = [collect(config.Min[i] - config.Δ[i] * config.NG:config.Δ[i]:config.Max[i] + convert(eltype(config.Δ), 1.000001)*config.Δ[i] * config.NG) for i in 1:config.dim]
@@ -181,7 +181,7 @@ function __MeshCartesianStatic(config::MeshConfig, particles, ::VertexMode, unit
     rho = [zv.density for p in iter]
     phi = [zv.potpermass for p in iter]
 
-    if gpu
+    if device isa GPU
         return MeshCartesianStatic(
             config,
             cu(particles),
@@ -213,9 +213,9 @@ Construct a static Cartesian mesh from nothing.
 ## Keywords
 - `mhd::Bool`. If `true`, initiate `B`, `E`, `rho_e` and `j`. Default is `false`
 """
-function MeshCartesianStatic(units = nothing; gpu = false, mhd = false, kw...)
+function MeshCartesianStatic(units = nothing; device = CPU(), mhd = false, kw...)
     config = MeshConfig(units; kw...)
-    return __MeshCartesianStatic(config, nothing, config.mode, units; gpu, mhd)
+    return __MeshCartesianStatic(config, nothing, config.mode, units; device, mhd)
 end
 
 """
@@ -238,7 +238,7 @@ function MeshCartesianStatic(particles::StructArray, units = nothing;
     zMin = nothing,
     zMax = nothing,
     assign = true,
-    gpu = false,
+    device = CPU(),
     enlarge = 2.01,
     kw...
 )
@@ -251,10 +251,10 @@ function MeshCartesianStatic(particles::StructArray, units = nothing;
         yMax = isnothing(yMax) ? E.yMax : yMax,
         zMin = isnothing(zMin) ? E.zMin : zMin,
         zMax = isnothing(zMax) ? E.zMax : zMax,
-        mode, assignment, boundary, gpu,
+        mode, assignment, boundary, device,
         kw...
     )
-    mesh = __MeshCartesianStatic(config, particles, mode, units; gpu)
+    mesh = __MeshCartesianStatic(config, particles, mode, units; device)
 
     if assign
         assignmesh(particles, mesh, :Mass, :rho)
