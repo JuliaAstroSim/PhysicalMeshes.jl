@@ -160,13 +160,12 @@ function Base.show(io::IO, mesh::MeshCartesianStatic)
 end
 
 function __MeshCartesianStatic(config::MeshConfig, particles, ::VertexMode, units = nothing;
-    device = CPU(),
     mhd = false,
 )
-    a = [collect(config.Min[i] - config.Δ[i] * config.NG:config.Δ[i]:config.Max[i] + convert(eltype(config.Δ), 1.000001)*config.Δ[i] * config.NG) for i in 1:config.dim]
+    a = [collect(LinRange(config.Min[i] - config.Δ[i] * config.NG, config.Max[i] + config.Δ[i] * config.NG, config.Len[i]+1)) for i in 1:config.dim]
     iter = Iterators.product(a...)
 
-    zv = ZeroValue(eltype(config.Δ), units)
+    zv = ZeroValue(eltype(ustrip(config.Δ[1])), units)
 
     if config.dim == 1 # StructArray is empty for eltype
         pos = [PVector(p...) for p in iter]
@@ -181,7 +180,7 @@ function __MeshCartesianStatic(config::MeshConfig, particles, ::VertexMode, unit
     rho = [zv.density for p in iter]
     phi = [zv.potpermass for p in iter]
 
-    if device isa GPU
+    if config.device isa GPU
         return MeshCartesianStatic(
             config,
             cu(particles),
@@ -213,9 +212,9 @@ Construct a static Cartesian mesh from nothing.
 ## Keywords
 - `mhd::Bool`. If `true`, initiate `B`, `E`, `rho_e` and `j`. Default is `false`
 """
-function MeshCartesianStatic(units = nothing; device = CPU(), mhd = false, kw...)
+function MeshCartesianStatic(units::Union{Nothing, Vector{Unitful.FreeUnits{N, D, nothing} where {N, D}}} = nothing; mhd = false, kw...)
     config = MeshConfig(units; kw...)
-    return __MeshCartesianStatic(config, nothing, config.mode, units; device, mhd)
+    return __MeshCartesianStatic(config, nothing, config.mode, units; mhd)
 end
 
 """
@@ -240,21 +239,36 @@ function MeshCartesianStatic(particles::StructArray, units = nothing;
     assign = true,
     device = CPU(),
     enlarge = 2.01,
+    cube = true,
     kw...
 )
     E = extent(particles) * enlarge
+    if cube
+        Min = min(E.xMin, E.yMin, E.zMin)
+        !isnothing(xMin) && (Min = min(Min, xMin))
+        !isnothing(yMin) && (Min = min(Min, yMin))
+        !isnothing(zMin) && (Min = min(Min, zMin))
+        Max = max(E.xMax, E.yMax, E.zMax)
+        !isnothing(xMax) && (Max = max(Max, xMax))
+        !isnothing(yMax) && (Max = max(Max, yMax))
+        !isnothing(zMax) && (Max = max(Max, zMax))
+        xMin = yMin = zMin = Min
+        xMax = yMax = zMax = Max
+    else
+        xMin = isnothing(xMin) ? E.xMin : xMin
+        xMax = isnothing(xMax) ? E.xMax : xMax
+        yMin = isnothing(yMin) ? E.yMin : yMin
+        yMax = isnothing(yMax) ? E.yMax : yMax
+        zMin = isnothing(zMin) ? E.zMin : zMin
+        zMax = isnothing(zMax) ? E.zMax : zMax
+    end
     config = MeshConfig(units;
         Nx, Ny, Nz, NG,
-        xMin = isnothing(xMin) ? E.xMin : xMin,
-        xMax = isnothing(xMax) ? E.xMax : xMax,
-        yMin = isnothing(yMin) ? E.yMin : yMin,
-        yMax = isnothing(yMax) ? E.yMax : yMax,
-        zMin = isnothing(zMin) ? E.zMin : zMin,
-        zMax = isnothing(zMax) ? E.zMax : zMax,
+        xMin, xMax, yMin, yMax, zMin, zMax,
         mode, assignment, boundary, device,
         kw...
     )
-    mesh = __MeshCartesianStatic(config, particles, mode, units; device)
+    mesh = __MeshCartesianStatic(config, particles, mode, units)
 
     if assign
         assignmesh(particles, mesh, :Mass, :rho)
