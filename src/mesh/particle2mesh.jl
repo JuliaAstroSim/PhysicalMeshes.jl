@@ -1,16 +1,14 @@
-function NGPinfo(mesh::AbstractMesh, pos::AbstractVector{T}) where T<:Number
-    config = mesh.config
+function NGPinfo(meshpos, config, pos::AbstractVector{T}) where T<:Number
     id = round(Int, (pos .- config.Min) ./ config.Δ) .+ 1 .+ config.NG
 end
 
-function CICinfo(mesh::AbstractMesh, pos::AbstractVector{T}) where T<:Number
-    config = mesh.config
+function CICinfo(meshpos, config, pos::AbstractVector{T}) where T<:Number
     # Here, left means smaller coordinate value in that dimension
     # find the index of nearest left and right vertex
     idl = floor.(Int, (pos .- config.Min) ./ config.Δ) .+ 1 .+ config.NG
     idr = idl .+ 1
 
-    pl = SVector(mesh.pos[idl...])       # position of left vertex
+    pl = SVector(meshpos[idl...])       # position of left vertex
 
     rl = (pl .- pos) ./ config.Δ .+ 1.0  # assignment ratio of left vertex
     rr = 1.0 .- rl                       # assignment ratio of right vertex
@@ -21,13 +19,13 @@ function CICinfo(mesh::AbstractMesh, pos::AbstractVector{T}) where T<:Number
     return id, r
 end
 
-function TSCinfo(mesh::AbstractMesh, pos::AbstractVector{T}) where T<:Number
+function TSCinfo(meshpos, config, pos::AbstractVector{T}) where T<:Number
     config = mesh.config
     idl = floor.(Int, (pos .- config.Min) ./ config.Δ .- 0.5) .+ 1 .+ config.NG
     idm = idl .+ 1
     idr = idm .+ 1
     
-    pl = SVector(mesh.pos[idl...])
+    pl = SVector(meshpos[idl...])
     
     rl = (pl .- pos .+ 1.5 * config.Δ) .^2 ./ 2 ./ config.Δ ./ config.Δ
     rr = (pl .- pos .+ 0.5 * config.Δ) .^2 ./ 2 ./ config.Δ ./ config.Δ
@@ -61,23 +59,23 @@ end
 
 outbound_list(m::MeshCartesianStatic) = outbound_list(m.data.Pos, m)
 
-function particle2mesh(mesh::AbstractMesh, pos::AbstractVector{T}, rho::Number, symbolMesh::Symbol, ::VertexMode, ::NGP) where T<:Number
-    # Find the nearest vertex and assign with rho
-    id = NGPinfo(mesh, pos)
-    getproperty(mesh, symbolMesh)[id...] += rho
+function particle2mesh!(meshpos, config, pos::AbstractVector{T}, meshdata, particledata, ::VertexMode, ::NGP) where T<:Number
+    # Find the nearest vertex and assign with particledata
+    id = NGPinfo(meshpos, config, pos)
+    meshdata[id...] += particledata
 end
 
-function particle2mesh(mesh::AbstractMesh, pos::AbstractVector{T}, rho::Number, symbolMesh::Symbol, ::VertexMode, ::CIC) where T<:Number
-    id, r = CICinfo(mesh, pos)
+function particle2mesh!(meshpos, config, pos::AbstractVector{T}, meshdata, particledata, ::VertexMode, ::CIC) where T<:Number
+    id, r = CICinfo(meshpos, config, pos)
     for i in 1:2, j in 1:2, k in 1:2
-        @inbounds getproperty(mesh, symbolMesh)[id[i][1], id[j][2], id[k][3]] += rho * r[i][1] * r[j][2] * r[k][3]
+        @inbounds meshdata[id[i][1], id[j][2], id[k][3]] += particledata * r[i][1] * r[j][2] * r[k][3]
     end
 end
 
-function particle2mesh(mesh::AbstractMesh, pos::AbstractVector{T}, rho::Number, symbolMesh::Symbol, ::VertexMode, ::TSC) where T<:Number
-    id, r = TSCinfo(mesh, pos)
+function particle2mesh!(meshpos, config, pos::AbstractVector{T}, meshdata, particledata, ::VertexMode, ::TSC) where T<:Number
+    id, r = TSCinfo(meshpos, config, pos)
     for i in 1:3, j in 1:3, k in 1:3
-        @inbounds getproperty(mesh, symbolMesh)[id[i][1], id[j][2], id[k][3]] += rho * r[i][1] * r[j][2] * r[k][3]
+        @inbounds meshdata[id[i][1], id[j][2], id[k][3]] += particledata * r[i][1] * r[j][2] * r[k][3]
     end
 end
 
@@ -95,47 +93,43 @@ Base.@propagate_inbounds function assignmesh(particles::StructArray, mesh::MeshC
     config = mesh.config
     getproperty(mesh, symbolMesh) .*= 0.0
 
-    #TODO this is unsafe assign
-    #Threads.@threads for k in 1:Threads.nthreads()
-    #    Head, Tail = split_block(length(particles), k, Threads.nthreads())
-    #    for i in Head:Tail
-    #        rho = getproperty(particles, symbolParticle)[i] / prod(config.Δ)
-    #        if is_inbound(particles.Pos[i], config)
-    #            pos = SVector(particles.Pos[i])
-    #            particle2mesh(mesh, pos, rho, symbolMesh, config.mode, config.assignment)
-    #        end
-    #    end
-    #end
+    CUDA.@allowscalar meshpos = Array(mesh.pos)
+    CUDA.@allowscalar meshdata = Array(getproperty(mesh, symbolMesh))
+    particledata = getproperty(particles, symbolParticle)
 
     for i in eachindex(particles)
-        rho = getproperty(particles, symbolParticle)[i] / prod(config.Δ)
+        rho = particledata[i] / prod(config.Δ)
         if is_inbound(particles.Pos[i], config)
             pos = SVector(particles.Pos[i])
-            particle2mesh(mesh, pos, rho, symbolMesh, config.mode, config.assignment)
+            particle2mesh!(meshpos, config, pos, meshdata, rho, config.mode, config.assignment)
         end
     end
 
-    #TODO GPU
+    if getproperty(mesh, symbolMesh) isa CuArray
+        getproperty(mesh, symbolMesh) .= cu(meshdata)
+    else
+        getproperty(mesh, symbolMesh) .= meshdata
+    end
 end
 
 assignmesh(m::MeshCartesianStatic) = assignmesh(m.data, m, :Mass, :rho)
 
-function mesh2particle(mesh::AbstractMesh, pos::AbstractVector{T}, symbolMesh::Symbol, ::VertexMode, ::NGP) where T<:Number
-    id = NGPinfo(mesh, pos)
-    return getproperty(mesh, symbolMesh)[id...]
+function mesh2particle(meshpos, config, meshdata, pos::AbstractVector{T}, ::VertexMode, ::NGP) where T<:Number
+    id = NGPinfo(meshpos, config, pos)
+    return meshdata[id...]
 end
 
-function mesh2particle(mesh::AbstractMesh, pos::AbstractVector{T}, symbolMesh::Symbol, ::VertexMode, ::CIC) where T<:Number
-    id, r = CICinfo(mesh, pos)
-    return sum([getproperty(mesh, symbolMesh)[id[i][1], id[j][2], id[k][3]] * r[i][1] * r[j][2] * r[k][3] for i in 1:2, j in 1:2, k in 1:2])
+function mesh2particle(meshpos, config, meshdata, pos::AbstractVector{T}, ::VertexMode, ::CIC) where T<:Number
+    id, r = CICinfo(meshpos, config, pos)
+    return sum([meshdata[id[i][1], id[j][2], id[k][3]] * r[i][1] * r[j][2] * r[k][3] for i in 1:2, j in 1:2, k in 1:2])
 end
 
-function mesh2particle(mesh::AbstractMesh, pos::AbstractVector{T}, symbolMesh::Symbol, ::VertexMode, ::TSC) where T<:Number
-    id, r = TSCinfo(mesh, pos)
-    return sum([getproperty(mesh, symbolMesh)[id[i][1], id[j][2], id[k][3]] * r[i][1] * r[j][2] * r[k][3] for i in 1:3, j in 1:3, k in 1:3])
+function mesh2particle(meshpos, config, meshdata, pos::AbstractVector{T}, ::VertexMode, ::TSC) where T<:Number
+    id, r = TSCinfo(meshpos, config, pos)
+    return sum([meshdata[id[i][1], id[j][2], id[k][3]] * r[i][1] * r[j][2] * r[k][3] for i in 1:3, j in 1:3, k in 1:3])
 end
 
-mesh2particle(mesh::AbstractMesh, pos::AbstractPoint, args...) = mesh2particle(mesh, SVector(pos), args...)
+mesh2particle(meshpos, config, meshdata, pos::AbstractPoint, args...) = mesh2particle(meshpos, config, meshdata, SVector(pos), args...)
 
 """
 $(TYPEDSIGNATURES)
@@ -149,14 +143,15 @@ assignparticle(data, m, :Acc, :acc)
 """
 Base.@propagate_inbounds function assignparticle(particles::StructArray, mesh::MeshCartesianStatic, symbolParticle::Symbol, symbolMesh::Symbol)
     config = mesh.config
-    Threads.@threads for k in 1:Threads.nthreads()
-        Head, Tail = split_block(length(particles), k, Threads.nthreads())
-        for i in Head:Tail
-            if is_inbound(particles.Pos[i], config)
-                pos = SVector(particles.Pos[i])
-                getproperty(particles, symbolParticle)[i] = mesh2particle(mesh, pos, symbolMesh, config.mode, config.assignment)
-            end
+
+    CUDA.@allowscalar meshpos = Array(mesh.pos)
+    CUDA.@allowscalar meshdata = Array(getproperty(mesh, symbolMesh))
+    particledata = getproperty(particles, symbolParticle)
+
+    for i in eachindex(particles)
+        if is_inbound(particles.Pos[i], config)
+            pos = SVector(particles.Pos[i])
+            particledata[i] = mesh2particle(meshpos, config, meshdata, pos, config.mode, config.assignment)
         end
     end
-    #TODO GPU
 end
