@@ -78,6 +78,15 @@ export
     AbstractLine2D, AbstractLine3D,
     Line, Line2D,
 
+    # Plane
+    Plane,
+    coplanar,
+
+    # Polygon
+    Polygon2D, Polygon3D,
+    polygon_rect, polygon_regular,
+    isconvex,
+
     # Ray
     Ray2D, Ray3D,
     intersect,
@@ -123,6 +132,9 @@ abstract type AbstractLine{T} <: AbstractGeometryType{T} end
 abstract type AbstractLine2D{T} <: AbstractLine{T} end
 abstract type AbstractLine3D{T} <: AbstractLine{T} end
 
+abstract type AbstractPlane{T} <: AbstractGeometryType{T} end
+abstract type AbstractPlane3D{T} <: AbstractPlane{T} end
+
 abstract type AbstractPolygon{T} <: AbstractGeometryType{T} end
 abstract type AbstractPolygon2D{T} <: AbstractPolygon{T} end
 abstract type AbstractPolygon3D{T} <: AbstractPolygon{T} end
@@ -156,6 +168,7 @@ include("core/predicates.jl")
 include("Sphere.jl")
 
 include("Line.jl")
+include("Plane.jl")
 include("Polygon.jl")
 include("Ray.jl")
 include("Cube.jl")

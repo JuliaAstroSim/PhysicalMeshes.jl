@@ -29,6 +29,8 @@ struct Ray3D{T<:Number} <: AbstractRay3D{T}
     n::PVector{T}
 end
 
+### Ray2D reflect from Line2D
+
 function intersect(ray::Ray2D, line::Line2D)
     AB = line.b - line.a
     ray_norm = PVector2D(-ray.n.y, ray.n.x) # ⟂ ray
@@ -39,20 +41,45 @@ function intersect(ray::Ray2D, line::Line2D)
     AX = ray.x - line.a
     t1 = dot(PVector2D(-AB.y, AB.x), AX) / dot_ray_norm_AB
     t2 = dot(AX, ray_norm) / dot_ray_norm_AB
-    if t1 >= 0 && t2 >= 0 && t2 <= 1
-        intersection_point = ray.x + ray.n * t1
+    if t1 >= 0 && t2 >= 0 && t2 <= one(t2)
+        intersection_point = ray.x + ray.n * t1 # rescaling
         return true, intersection_point
     else
         return false, PVector2D()  # no intersection
     end
 end
 
-reflect(vec::PVector2D, n::PVector2D) = vec - 2*ustrip(n)*dot(vec, ustrip(n))
+reflect(vec::AbstractPoint, n::AbstractPoint) = vec - 2*ustrip(n)*dot(vec, ustrip(n))
 
 function reflect(ray::Ray2D, line::Line2D)
     hit, intersection = intersect(ray, line)
     if hit
         return Ray2D(intersection, reflect(ray.n, normal(line)))
+    else
+        return nothing
+    end
+end
+
+### Ray3D reflect from Plane
+
+function intersect(ray::Ray3D, plane::Plane)
+    N = normal(plane)
+    denom = dot(ray.n, N)
+    if norm(denom) < 1e-6 * unit(denom)
+        return false, PVector(0, 0, 0)  # ∥, no intersection
+    end
+    t = dot(plane.a - ray.x, N) / denom
+    if t < 0
+        return false, PVector(0, 0, 0)  # no intersection
+    end
+    intersection_point = ray.x + ray.n * t # rescaling
+    return true, intersection_point
+end
+
+function reflect(ray::Ray3D, plane::Plane)
+    hit, intersection = intersect(ray, plane)
+    if hit
+        return Ray3D(intersection, reflect(ray.n, normal(plane)))
     else
         return nothing
     end
