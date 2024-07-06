@@ -22,7 +22,7 @@ end
 end
 
 import Core: Number
-import Base: +, -, *, /, show, real, length, iterate
+import Base: +, -, *, /, show, real, length, iterate, intersect
 import Unitful: Units, FloatTypes
 #import Decimals: Decimal, decimal
 import PhysicalParticles: PVector2D, PVector, area, volume, mass_center
@@ -52,6 +52,7 @@ export
     orientation,
     centroid, #center,
     midpoint,
+    normal,
 
     circumcenter,
     #circumcenter_exact,
@@ -76,6 +77,11 @@ export
     AbstractLine,
     AbstractLine2D, AbstractLine3D,
     Line, Line2D,
+
+    # Ray
+    Ray2D, Ray3D,
+    intersect,
+    reflect,
     
     # Cube
     AbstractCube,
@@ -117,6 +123,14 @@ abstract type AbstractLine{T} <: AbstractGeometryType{T} end
 abstract type AbstractLine2D{T} <: AbstractLine{T} end
 abstract type AbstractLine3D{T} <: AbstractLine{T} end
 
+abstract type AbstractPolygon{T} <: AbstractGeometryType{T} end
+abstract type AbstractPolygon2D{T} <: AbstractPolygon{T} end
+abstract type AbstractPolygon3D{T} <: AbstractPolygon{T} end
+
+abstract type AbstractRay{T} <: AbstractGeometryType{T} end
+abstract type AbstractRay2D{T} <: AbstractRay{T} end
+abstract type AbstractRay3D{T} <: AbstractRay{T} end
+
 abstract type AbstractCube{T} <: AbstractGeometryType{T} end
 abstract type AbstractCube2D{T} <: AbstractCube{T} end
 abstract type AbstractCube3D{T} <: AbstractCube{T} end
@@ -142,6 +156,8 @@ include("core/predicates.jl")
 include("Sphere.jl")
 
 include("Line.jl")
+include("Polygon.jl")
+include("Ray.jl")
 include("Cube.jl")
 include("Triangle.jl")
 include("Tetrahedron.jl")

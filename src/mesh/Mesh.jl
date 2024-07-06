@@ -161,6 +161,7 @@ end
 
 function __MeshCartesianStatic(config::MeshConfig, particles, ::VertexMode, units = nothing;
     mhd = false,
+    data_on_cpu = false,
 )
     a = [collect(LinRange(config.Min[i] - config.Δ[i] * config.NG, config.Max[i] + config.Δ[i] * config.NG, config.Len[i]+1)) for i in 1:config.dim]
     iter = Iterators.product(a...)
@@ -180,7 +181,7 @@ function __MeshCartesianStatic(config::MeshConfig, particles, ::VertexMode, unit
     rho = [zv.density for p in iter]
     phi = [zv.potpermass for p in iter]
 
-    if config.device isa GPU
+    if config.device isa GPU && !data_on_cpu
         return MeshCartesianStatic(
             config,
             cu(particles),
@@ -212,9 +213,9 @@ Construct a static Cartesian mesh from nothing.
 ## Keywords
 - `mhd::Bool`. If `true`, initiate `B`, `E`, `rho_e` and `j`. Default is `false`
 """
-function MeshCartesianStatic(units::Union{Nothing, Vector{Unitful.FreeUnits{N, D, nothing} where {N, D}}} = nothing; mhd = false, kw...)
+function MeshCartesianStatic(units::Union{Nothing, Vector{Unitful.FreeUnits{N, D, nothing} where {N, D}}} = nothing; mhd = false, data_on_cpu = false, kw...)
     config = MeshConfig(units; kw...)
-    return __MeshCartesianStatic(config, nothing, config.mode, units; mhd)
+    return __MeshCartesianStatic(config, nothing, config.mode, units; mhd, data_on_cpu)
 end
 
 """
@@ -238,6 +239,7 @@ function MeshCartesianStatic(particles::StructArray, units = nothing;
     zMax = nothing,
     assign = true,
     device = CPU(),
+    data_on_cpu = false,
     enlarge = 2.01,
     cube = true,
     kw...
@@ -268,7 +270,7 @@ function MeshCartesianStatic(particles::StructArray, units = nothing;
         mode, assignment, boundary, device,
         kw...
     )
-    mesh = __MeshCartesianStatic(config, particles, mode, units)
+    mesh = __MeshCartesianStatic(config, particles, mode, units; data_on_cpu)
 
     if assign
         assignmesh(particles, mesh, :Mass, :rho)

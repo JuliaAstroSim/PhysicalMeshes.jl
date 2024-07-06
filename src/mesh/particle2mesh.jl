@@ -57,7 +57,7 @@ function outbound_list(pos::AbstractArray, m::MeshCartesianStatic)
     return list
 end
 
-outbound_list(m::MeshCartesianStatic) = outbound_list(m.data.Pos, m)
+outbound_list(m::MeshCartesianStatic) = CUDA.@allowscalar outbound_list(Array(m.data.Pos), m)
 
 function particle2mesh!(meshpos, config, pos::AbstractVector{T}, meshdata, particledata, ::VertexMode, ::NGP) where T<:Number
     # Find the nearest vertex and assign with particledata
@@ -95,12 +95,13 @@ Base.@propagate_inbounds function assignmesh(particles::StructArray, mesh::MeshC
 
     CUDA.@allowscalar meshpos = Array(mesh.pos)
     CUDA.@allowscalar meshdata = Array(getproperty(mesh, symbolMesh))
-    particledata = getproperty(particles, symbolParticle)
+    CUDA.@allowscalar particlepos = Array(particles.Pos)
+    CUDA.@allowscalar particledata = Array(getproperty(particles, symbolParticle))
 
     for i in eachindex(particles)
         rho = particledata[i] / prod(config.Δ)
-        if is_inbound(particles.Pos[i], config)
-            pos = SVector(particles.Pos[i])
+        if is_inbound(particlepos[i], config)
+            pos = SVector(particlepos[i])
             particle2mesh!(meshpos, config, pos, meshdata, rho, config.mode, config.assignment)
         end
     end
@@ -146,12 +147,19 @@ Base.@propagate_inbounds function assignparticle(particles::StructArray, mesh::M
 
     CUDA.@allowscalar meshpos = Array(mesh.pos)
     CUDA.@allowscalar meshdata = Array(getproperty(mesh, symbolMesh))
-    particledata = getproperty(particles, symbolParticle)
+    CUDA.@allowscalar particlepos = Array(particles.Pos)
+    CUDA.@allowscalar particledata = Array(getproperty(particles, symbolParticle))
 
     for i in eachindex(particles)
-        if is_inbound(particles.Pos[i], config)
-            pos = SVector(particles.Pos[i])
+        if is_inbound(particlepos[i], config)
+            pos = SVector(particlepos[i])
             particledata[i] = mesh2particle(meshpos, config, meshdata, pos, config.mode, config.assignment)
         end
+    end
+
+    if getproperty(particles, symbolParticle) isa CuArray
+        getproperty(particles, symbolParticle) .= cu(particledata)
+    else
+        getproperty(particles, symbolParticle) .= particledata
     end
 end

@@ -103,3 +103,12 @@ $(TYPEDSIGNATURES)
 Average position of line vertices.
 """
 midpoint(line::AbstractLine) = centroid(line)
+
+"""
+$(TYPEDSIGNATURES)
+Get the unit normal vector of 2D line. Counter-lock
+"""
+function normal(line::Line2D)
+    AB = line.b - line.a
+    normalize(PVector2D(-AB.y, AB.x))
+end
