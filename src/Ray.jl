@@ -30,7 +30,9 @@ struct Ray3D{T<:Number} <: AbstractRay3D{T}
 end
 
 ### Ray2D reflect from Line2D
-
+"""
+$(TYPEDSIGNATURES)
+"""
 function intersect(ray::Ray2D, line::Line2D)
     AB = line.b - line.a
     ray_norm = PVector2D(-ray.n.y, ray.n.x) # ⟂ ray
@@ -49,8 +51,14 @@ function intersect(ray::Ray2D, line::Line2D)
     end
 end
 
+"""
+$(TYPEDSIGNATURES)
+"""
 reflect(vec::AbstractPoint, n::AbstractPoint) = vec - 2*ustrip(n)*dot(vec, ustrip(n))
 
+"""
+$(TYPEDSIGNATURES)
+"""
 function reflect(ray::Ray2D, line::Line2D)
     hit, intersection = intersect(ray, line)
     if hit
@@ -61,7 +69,9 @@ function reflect(ray::Ray2D, line::Line2D)
 end
 
 ### Ray3D reflect from Plane
-
+"""
+$(TYPEDSIGNATURES)
+"""
 function intersect(ray::Ray3D, plane::Plane)
     N = normal(plane)
     denom = dot(ray.n, N)
@@ -76,6 +86,9 @@ function intersect(ray::Ray3D, plane::Plane)
     return true, intersection_point
 end
 
+"""
+$(TYPEDSIGNATURES)
+"""
 function reflect(ray::Ray3D, plane::Plane)
     hit, intersection = intersect(ray, plane)
     if hit

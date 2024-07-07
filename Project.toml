@@ -1,7 +1,7 @@
 name = "PhysicalMeshes"
 uuid = "97d9904f-034f-4fb7-aeaa-03a173434233"
 authors = ["islent <leoislent@gmail.com>"]
-version = "0.1.5"
+version = "0.1.6"
 
 [deps]
 AstroSimBase = "c6a34d98-f626-4d8d-b450-a3f124eaada6"
