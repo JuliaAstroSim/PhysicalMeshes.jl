@@ -22,7 +22,7 @@ end
 end
 
 import Core: Number
-import Base: +, -, *, /, show, real, length, iterate, intersect
+import Base: +, -, *, /, show, real, length, iterate, intersect, zero, iszero
 import Unitful: Units, FloatTypes
 #import Decimals: Decimal, decimal
 import PhysicalParticles: PVector2D, PVector, area, volume, mass_center

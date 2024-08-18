@@ -18,6 +18,9 @@ Ray2D(n::PVector2D{T}) where T<:Number = Ray2D(PVector2D(T), n, atan(n.y, n.x))
 Ray2D(x::PVector2D{T}, theta::Number) where T<:Number = Ray2D(x, PVector2D(T(sin(theta)), T(cos(theta))), theta)
 Ray2D(theta::Number) = Ray2D(PVector2D(), PVector2D(sin(theta), cos(theta)), theta)
 
+zero(r::Ray2D) = Ray2D(r.x, zero(r.n), zero(r.x.x))
+iszero(r::Ray2D) = iszero(r.n)
+
 """
 $(TYPEDEF)
 $(TYPEDFIELDS)
@@ -28,6 +31,9 @@ struct Ray3D{T<:Number} <: AbstractRay3D{T}
     "direction vector"
     n::PVector{T}
 end
+
+zero(r::Ray3D) = Ray3D(r.x, zero(r.n), zero(r.x.x))
+iszero(r::Ray3D) = iszero(r.n)
 
 ### Ray2D reflect from Line2D
 """
