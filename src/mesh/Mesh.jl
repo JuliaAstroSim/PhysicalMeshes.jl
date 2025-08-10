@@ -54,6 +54,10 @@ struct MeshConfig{I,VI,V,U,D}
     Len::VI
 end
 
+@inline length(p::T) where T <: MeshConfig = 1
+@inline iterate(p::T) where T <: MeshConfig = (p,nothing)
+@inline iterate(p::T,st) where T <: MeshConfig = nothing
+
 function Base.show(io::IO, config::MeshConfig)
     print(io, 
     """

@@ -74,27 +74,28 @@ export
     zoom, shrink,
 
     # Line
-    AbstractLine,
-    AbstractLine2D, AbstractLine3D,
+    AbstractLine, AbstractLine2D, AbstractLine3D,
     Line, Line2D,
 
     # Plane
+    AbstractPlane, AbstractPlane3D,
     Plane,
     coplanar,
 
     # Polygon
+    AbstractPolygon, AbstractPolygon2D, AbstractPolygon3D,
     Polygon2D, Polygon3D,
     polygon_rect, polygon_regular,
     isconvex,
 
     # Ray
+    AbstractRay, AbstractRay2D, AbstractRay3D,
     Ray2D, Ray3D,
     intersect,
     reflect,
     
     # Cube
-    AbstractCube,
-    AbstractCube2D, AbstractCube3D,
+    AbstractCube, AbstractCube2D, AbstractCube3D,
     Cube, Cube2D,
 
     # Triangle
