@@ -168,7 +168,7 @@ function shrink(a::AbstractArray{T,1}, ratio::Int, shift::Int=0) where T
     Nx = size(a, 1)
     out = Array{T,1}(undef, div(Nx, ratio))
     for i in 1:div(Nx,ratio)
-        @inbounds out[i, j] = a[i*ratio - shift]
+        @inbounds out[i] = a[i*ratio - shift]
     end
     out
 end
