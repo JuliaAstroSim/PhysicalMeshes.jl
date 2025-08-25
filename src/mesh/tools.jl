@@ -164,19 +164,24 @@ julia> shrink(ones(6,6,6),3)
  1.0  1.0
 ```
 """
-function shrink(a::AbstractArray{T,1}, ratio::Int) where T
-    return a[iszero.(mod.(eachindex(a), ratio))]
+function shrink(a::AbstractArray{T,1}, ratio::Int, shift::Int=0) where T
+    Nx = size(a, 1)
+    out = Array{T,1}(undef, div(Nx, ratio))
+    for i in 1:div(Nx,ratio)
+        @inbounds out[i, j] = a[i*ratio - shift]
+    end
+    out
 end
 
 """
 $(TYPEDSIGNATURES)
 """
-function shrink(a::AbstractArray{T,2}, ratio::Int) where T
+function shrink(a::AbstractArray{T,2}, ratio::Int, shift::Int=0) where T
     Nx, Ny = size(a)
     out = Array{T,2}(undef, div(Nx, ratio), div(Ny, ratio))
     for j in 1:div(Ny,ratio)
         for i in 1:div(Nx,ratio)
-            @inbounds out[i, j] = a[i*ratio, j*ratio]
+            @inbounds out[i, j] = a[i*ratio - shift, j*ratio - shift]
         end
     end
     out
@@ -185,13 +190,13 @@ end
 """
 $(TYPEDSIGNATURES)
 """
-function shrink(a::AbstractArray{T,3}, ratio::Int) where T
+function shrink(a::AbstractArray{T,3}, ratio::Int, shift::Int=0) where T
     Nx, Ny, Nz = size(a)
     out = Array{T,3}(undef, div(Nx,ratio), div(Ny,ratio), div(Nz,ratio))
     for k in 1:div(Nz,ratio)
         for j in 1:div(Ny,ratio)
             for i in 1:div(Nx,ratio)
-                @inbounds out[i, j, k] = a[i*ratio, j*ratio, k*ratio]
+                @inbounds out[i, j, k] = a[i*ratio - shift, j*ratio - shift, k*ratio - shift]
             end
         end
     end
