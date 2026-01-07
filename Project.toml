@@ -1,7 +1,7 @@
 name = "PhysicalMeshes"
 uuid = "97d9904f-034f-4fb7-aeaa-03a173434233"
-authors = ["islent <leoislent@gmail.com>"]
 version = "0.1.7"
+authors = ["islent <leoislent@gmail.com>"]
 
 [deps]
 AstroSimBase = "c6a34d98-f626-4d8d-b450-a3f124eaada6"
@@ -21,6 +21,7 @@ UnitfulAstro = "6112ee07-acf9-5e0f-b108-d242c714bf9f"
 AstroSimBase = "0.1"
 CUDA = "3, 4, 5"
 DocStringExtensions = "0.8, 0.9"
+IterativeSolvers = "0.9"
 PhysicalParticles = "1"
 PrecompileTools = "1"
 StaticArrays = "1"
