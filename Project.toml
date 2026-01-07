@@ -1,14 +1,13 @@
 name = "PhysicalMeshes"
 uuid = "97d9904f-034f-4fb7-aeaa-03a173434233"
-authors = ["islent <leoislent@gmail.com>"]
 version = "0.1.7"
+authors = ["islent <leoislent@gmail.com>"]
 
 [deps]
 AstroSimBase = "c6a34d98-f626-4d8d-b450-a3f124eaada6"
 CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
-IterativeSolvers = "42fd0dbc-a981-5370-80f2-aaf504508153"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 PhysicalParticles = "78724250-4eb2-11e9-0f34-13a7aab864c5"
 PrecompileTools = "aea7be01-6a6a-4083-8856-8a6e6704d82a"
