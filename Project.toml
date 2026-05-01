@@ -18,7 +18,7 @@ UnitfulAstro = "6112ee07-acf9-5e0f-b108-d242c714bf9f"
 
 [compat]
 AstroSimBase = "0.1"
-CUDA = "3, 4, 5"
+CUDA = "3, 4, 5, 6"
 DocStringExtensions = "0.8, 0.9"
 PhysicalParticles = "1"
 PrecompileTools = "1"
