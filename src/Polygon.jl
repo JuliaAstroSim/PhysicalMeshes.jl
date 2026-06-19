@@ -9,7 +9,7 @@ struct Polygon2D{T} <: AbstractPolygon2D{T}
         if length(vertices) < 3
             error("Number of vertices less than 3, a concrete polygon should have more than 2 vertices")
         end
-    
+
         new{eltype(vertices)}(vertices)
     end
 end
@@ -34,11 +34,11 @@ struct Polygon3D{T} <: AbstractPolygon3D{T}
         if length(vertices) < 3
             error("Number of vertices less than 3, a concrete polygon should have more than 2 vertices")
         end
-    
+
         if !coplanar(vertices, unit(vertices[1].x)^2 * 1e-6)
             @warn "The polygon is not coplanar with 1e-6 threshold!"
         end
-    
+
         new{eltype(vertices)}(vertices)
     end
 end

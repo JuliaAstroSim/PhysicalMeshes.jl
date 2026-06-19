@@ -32,7 +32,7 @@ struct Ray3D{T<:Number} <: AbstractRay3D{T}
     n::PVector{T}
 end
 
-zero(r::Ray3D) = Ray3D(r.x, zero(r.n), zero(r.x.x))
+zero(r::Ray3D) = Ray3D(r.x, zero(r.n))
 iszero(r::Ray3D) = iszero(r.n)
 
 ### Ray2D reflect from Line2D
@@ -41,6 +41,12 @@ $(TYPEDSIGNATURES)
 """
 function intersect(ray::Ray2D, line::Line2D)
     AB = line.b - line.a
+    # Reject degenerate segments explicitly: with ``a == b`` the ``t2``
+    # range check below would still be ill-defined (every ``t`` is "on
+    # the segment"), so we shortcut with a clear no-intersection result.
+    if iszero(AB.x) && iszero(AB.y)
+        return false, PVector2D()
+    end
     ray_norm = PVector2D(-ray.n.y, ray.n.x) # ⟂ ray
     dot_ray_norm_AB = dot(ray_norm, AB)
     if iszero(dot_ray_norm_AB)

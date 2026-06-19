@@ -64,7 +64,9 @@ struct Line{T<:Number} <: AbstractLine3D{T}
     b::PVector{T}
 end
 
-Line(a::AbstractPoint2D{T}, b::AbstractPoint2D{T}) where T<:Number = Line2D(a,b)
+function Line(a::AbstractPoint2D, b::AbstractPoint2D)
+    return Line2D(a, b)
+end
 
 @inline +(m::Line, n::Line) = Line(m.a + n.a, m.b + n.b)
 

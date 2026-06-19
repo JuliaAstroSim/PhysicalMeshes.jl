@@ -3,11 +3,15 @@ module PhysicalMeshes
 using PrecompileTools
 using Unitful, UnitfulAstro
 using Distributed
+using DistributedArrays
 using LinearAlgebra
 using StaticArrays
 #using Decimals
 using StructArrays
 using DocStringExtensions
+using FFTW
+using Statistics
+using ParallelOperations
 
 using PhysicalParticles
 using AstroSimBase
@@ -23,9 +27,12 @@ end
 
 import Core: Number
 import Base: +, -, *, /, show, real, length, iterate, intersect, zero, iszero
+import Base: size, getindex, setindex!, sum, prod, minimum, maximum, extrema
+import Base: ndims, axes, eltype
 import Unitful: Units, FloatTypes
 #import Decimals: Decimal, decimal
 import PhysicalParticles: PVector2D, PVector, area, volume, mass_center
+import AstroSimBase: BoundaryCondition, Periodic, Dirichlet, Vacuum, CPU, GPU, DeviceType, traitstring
 
 export
     # Base
@@ -43,7 +50,6 @@ export
     OnEdge, OnFace,
 
     CellMode, VertexMode,
-    # Periodic, Dirichlet, Vacuum,
 
     NGP, CIC, TSC,
 
@@ -117,6 +123,27 @@ export
     AbstractMesh3D, AbstractMesh2D, AbstractMesh1D,
     MeshConfig,
     MeshCartesianStatic,
+    DistributedMesh,
+    MeshUnstructured,
+    MeshHybrid,
+
+    # Mesh operations
+    add_node!,
+    add_cell!,
+    add_field!,
+    add_subgrid!,
+    add_interface!,
+    get_field,
+    cell_volume,
+    cell_area,
+    cell_center,
+    cell_neighbors,
+    cell_neighbors,
+    node_neighbors,
+    number_of_nodes,
+    number_of_cells,
+    number_of_fields,
+    interpolate_field,
 
     #volume,
     #area,
@@ -154,10 +181,6 @@ abstract type AbstractTriangle3D{T} <: AbstractTriangle{T} end
 
 abstract type AbstractTetrahedron{T} <: AbstractGeometryType{T} end
 
-abstract type AbstractMesh{T} <: AbstractGeometryType{T} end
-# abstract type AbstractMesh1D{T} <: AbstractMesh{T} end
-# abstract type AbstractMesh2D{T} <: AbstractMesh{T} end
-# abstract type AbstractMesh3D{T} <: AbstractMesh{T} end
 
 include("Traits.jl")
 
@@ -166,8 +189,9 @@ include("core/orient.jl")
 include("core/circumcenter.jl")
 include("core/predicates.jl")
 
-include("Sphere.jl")
+include("field/Field.jl")
 
+include("Sphere.jl")
 include("Line.jl")
 include("Plane.jl")
 include("Polygon.jl")

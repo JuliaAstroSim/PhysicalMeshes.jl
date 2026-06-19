@@ -1,6 +1,11 @@
 # Refer to Meshkit project
 
-function orient_kernel(a::AbstractPoint2D, b::AbstractPoint2D, c::AbstractPoint2D)
+"""
+$(TYPEDSIGNATURES)
+Kernel of the 2D orientation test. Returns twice the signed area of the
+triangle (a, b, c), or zero if the three points are (numerically) collinear.
+"""
+@inline function orient_kernel(a::AbstractPoint2D, b::AbstractPoint2D, c::AbstractPoint2D)
     acx = a.x - c.x
     bcx = b.x - c.x
     acy = a.y - c.y
@@ -10,8 +15,8 @@ end
 
 """
 $(TYPEDSIGNATURES)
-Computes the orient.
-The result is also a rough approximation of twice the signed area.
+Computes the 2D orientation. The result is also a rough approximation of
+twice the signed area. Returns zero when the three points are collinear.
 """
 function orient(a::AbstractPoint2D, b::AbstractPoint2D, c::AbstractPoint2D)
     z = orient_kernel(a, b, c)
@@ -25,8 +30,9 @@ end=#
 
 """
 $(TYPEDSIGNATURES)
-Computes the orient.
-The result is also a rough approximation of twice the signed area.
+Computes the 3D orientation of the triangle (a, b, c) and returns the
+normal vector whose magnitude is twice the signed area. For collinear
+points the returned vector has zero magnitude.
 """
 function orient(a::AbstractPoint3D, b::AbstractPoint3D, c::AbstractPoint3D)
     acx = a.x - c.x
@@ -59,7 +65,14 @@ function orient_exact(a::AbstractPoint3D, b::AbstractPoint3D, c::AbstractPoint3D
     ))
 end
 =#
-function orient_kernel(a::AbstractPoint3D, b::AbstractPoint3D, c::AbstractPoint3D, d::AbstractPoint3D)
+
+"""
+$(TYPEDSIGNATURES)
+Kernel of the 3D orient test. Returns six times the signed volume of the
+tetrahedron (a, b, c, d). The result is exactly zero when the four points
+are coplanar.
+"""
+@inline function orient_kernel(a::AbstractPoint3D, b::AbstractPoint3D, c::AbstractPoint3D, d::AbstractPoint3D)
     ax = a.x - d.x
     bx = b.x - d.x
     cx = c.x - d.x
@@ -69,15 +82,21 @@ function orient_kernel(a::AbstractPoint3D, b::AbstractPoint3D, c::AbstractPoint3
     az = a.z - d.z
     bz = b.z - d.z
     cz = c.z - d.z
-    return ustrip(ax * (bz * cy - by * cz) + bx * (cz * ay - cy * az) + cx * (az * by - ay * bz))
+    
+    # Preserve units so callers like ``volume`` and ``orientation`` work
+    # for both unitful and unitless inputs. The orientation trait
+    # compares against zero, which works for ``Quantity`` as well.
+    return ax * (bz * cy - by * cz) + bx * (cz * ay - cy * az) + cx * (az * by - ay * bz)
+    # return ustrip(ax * (bz * cy - by * cz) + bx * (cz * ay - cy * az) + cx * (az * by - ay * bz))
 end
 
 """
 $(TYPEDSIGNATURES)
-Computes the orient.
-The result is also a rough approximation of six times the signed volume.
+Computes the 3D orient. The result is a rough approximation of six times
+the signed volume of the tetrahedron (a, b, c, d). The value is zero
+when the four points are coplanar.
 """
-function orient(a::AbstractPoint3D, b::AbstractPoint3D, c::AbstractPoint3D, d::AbstractPoint3D)
+@inline function orient(a::AbstractPoint3D, b::AbstractPoint3D, c::AbstractPoint3D, d::AbstractPoint3D)
     return orient_kernel(a, b, c, d)
 end
 #=

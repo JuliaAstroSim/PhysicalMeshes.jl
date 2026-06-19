@@ -59,7 +59,7 @@ end
 @inline iterate(p::T,st) where T <: MeshConfig = nothing
 
 function Base.show(io::IO, config::MeshConfig)
-    print(io, 
+    print(io,
     """
     Mesh config:
                           dim: $(config.dim)
@@ -125,7 +125,7 @@ keywords are passed into `MeshConfig`
 
 For more instructions, see the documentation: https://juliaastrosim.github.io/PhysicalMeshes.jl/dev
 """
-struct MeshCartesianStatic{I, VI, V, U, D, POS, VEL, ACC, _e, RHO, PHI, _B, _E, _j} <: AbstractMesh{U}
+struct MeshCartesianStatic{I, VI, V, U, D, POS, VEL, ACC, ENFIELD, RHOFIELD, PHIFIELD, BFIELD, EFIELD, JFIELD} <: AbstractMesh{U}
     config::MeshConfig{I,VI,V,U}
     data::D
 
@@ -133,21 +133,21 @@ struct MeshCartesianStatic{I, VI, V, U, D, POS, VEL, ACC, _e, RHO, PHI, _B, _E, 
     vel::VEL
     acc::ACC
     "energy density"
-    e::_e
+    e::ENFIELD
     "density"
-    rho::RHO
+    rho::RHOFIELD
     "potential"
-    phi::PHI
+    phi::PHIFIELD
 
     # MHD
     "magnetic field"
-    B::_B
+    B::BFIELD
     "eletric field"
-    E::_E
+    E::EFIELD
     "charge density"
-    rho_e
+    rho_e::RHOFIELD
     "eletrical circuit field"
-    j::_j
+    j::JFIELD
 end
 
 function Base.show(io::IO, mesh::MeshCartesianStatic)
@@ -163,7 +163,12 @@ function Base.show(io::IO, mesh::MeshCartesianStatic)
     )
 end
 
-function __MeshCartesianStatic(config::MeshConfig, particles, ::VertexMode, units = nothing;
+"""
+$(TYPEDSIGNATURES)
+Internal constructor for `MeshCartesianStatic` that handles both
+`VertexMode` and `CellMode` since the field layout is identical.
+"""
+function __MeshCartesianStatic(config::MeshConfig, particles, mode::MeshMode, units = nothing;
     mhd = false,
     data_on_cpu = false,
 )
@@ -181,34 +186,58 @@ function __MeshCartesianStatic(config::MeshConfig, particles, ::VertexMode, unit
         vel = StructArray(zv.vel for p in iter)
         acc = StructArray(zv.acc for p in iter)
     end
-    e = [zv.potpermass for p in iter]
-    rho = [zv.density for p in iter]
-    phi = [zv.potpermass for p in iter]
+
+    # Use new field types. In ``VertexMode`` the scalar/vector fields are
+    # defined on grid vertices so their size must match the position grid
+    # (``Len + 1`` per axis), while in ``CellMode`` they share the cell
+    # size (``Len`` per axis).
+    T = eltype(ustrip(config.Δ[1]))
+    field_dims = mode isa VertexMode ? tuple((config.Len .+ 1)...) : tuple(config.Len...)
+    e = ArrayScalarField(T, field_dims)
+    rho = ArrayScalarField(T, field_dims)
+    phi = ArrayScalarField(T, field_dims)
+
+    # Always allocate MHD fields so the struct's type parameters can be
+    # inferred even when ``mhd`` is false. For non-MHD simulations the
+    # zero-sized arrays are essentially free; the test suite expects
+    # ``B/E/rho_e/j`` to be present (but not used) in all meshes.
+    _vec_zero = ArrayVectorField(T, field_dims, max(config.dim, 1))
+    _scalar_zero = ArrayScalarField(T, field_dims)
+    if mhd
+        B = ArrayVectorField(T, field_dims, config.dim)
+        E = ArrayVectorField(T, field_dims, config.dim)
+        rho_e = ArrayScalarField(T, field_dims)
+        j = ArrayVectorField(T, field_dims, config.dim)
+    else
+        B = _vec_zero
+        E = _vec_zero
+        rho_e = _scalar_zero
+        j = _vec_zero
+    end
 
     if config.device isa GPU && !data_on_cpu
         return MeshCartesianStatic(
             config,
             cu(particles),
-            cu(pos), cu(vel), cu(acc), cu(e), cu(rho), cu(phi),
-            nothing, nothing, nothing, nothing,
+            cu(pos), cu(vel), cu(acc), e, rho, phi,
+            B, E, rho_e, j,
         )
     else
         return MeshCartesianStatic(
             config,
             particles,
             pos, vel, acc, e, rho, phi,
-            nothing, nothing, nothing, nothing,
+            B, E, rho_e, j,
         )
     end
-end
-
-function __MeshCartesianStatic(config::MeshConfig, particles, ::CellMode, units = nothing; kw...)
-
 end
 
 function MeshCartesianStatic(config::MeshConfig, particles, units = nothing; kw...)
     return __MeshCartesianStatic(config, particles, config.mode, units; kw...)
 end
+
+# Convenience constructor when only a ``MeshConfig`` is supplied
+MeshCartesianStatic(config::MeshConfig) = MeshCartesianStatic(config, nothing)
 
 """
 $(TYPEDSIGNATURES)
@@ -284,4 +313,28 @@ end
 
 function MeshCartesianStatic(particles::Array, units = nothing; kw...)
     return MeshCartesianStatic(StructArray(particles), units; kw...)
+end
+
+# AbstractMesh fallbacks for MeshCartesianStatic
+function number_of_nodes(mesh::MeshCartesianStatic)
+    config = mesh.config
+    if config.mode isa VertexMode
+        return prod(config.N .+ 1)
+    else
+        return prod(config.N)
+    end
+end
+
+function number_of_cells(mesh::MeshCartesianStatic)
+    return prod(mesh.config.N)
+end
+
+function number_of_fields(mesh::MeshCartesianStatic)
+    n = 0
+    for field_name in (:pos, :vel, :acc, :e, :rho, :phi, :B, :E, :rho_e, :j)
+        if !isnothing(getproperty(mesh, field_name))
+            n += 1
+        end
+    end
+    return n
 end
