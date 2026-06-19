@@ -1,16 +1,16 @@
 @setup_workload begin
     @compile_workload begin
         # Tools
-        zoom([1],2)
-        zoom(ones(Int, 1, 1),2)
-        zoom(ones(Int, 1, 1, 1),2)
+        zoom([1], 2)
+        zoom(ones(Int, 1, 1), 2)
+        zoom(ones(Int, 1, 1, 1), 2)
 
-        a1 = [1,2,3,4]
-        a2 = a1*a1'
-        a3 = ones(Int,4,4,4) .* reshape(a1,1,1,4)
-        shrink(a1,2)
-        shrink(a2,2)
-        shrink(a3,2)
+        a1 = [1, 2, 3, 4]
+        a2 = a1 * a1'
+        a3 = ones(Int, 4, 4, 4) .* reshape(a1, 1, 1, 4)
+        shrink(a1, 2)
+        shrink(a2, 2)
+        shrink(a3, 2)
 
         # Basic types
         c = Cube(PVector2D(1.0, 1.0), PVector2D())
@@ -80,22 +80,10 @@
         centroid(t)
         circumcenter(t)
 
-
-        # Mesh
-        pos = [
-            PVector(-1.0, -1.0, -1.0),
-            PVector(-1.0, +1.0, -1.0),
-            PVector(+1.0, -1.0, -1.0),
-            PVector(+1.0, +1.0, -1.0),
-            PVector(-1.0, -1.0, +1.0),
-            PVector(-1.0, +1.0, +1.0),
-            PVector(+1.0, -1.0, +1.0),
-            PVector(+1.0, +1.0, +1.0),
-        ]
-        dataArray = [Ball() for i in 1:8]
-        assign_particles(dataArray, :Pos, pos)
-        assign_particles(dataArray, :Mass, 1.0)
-        m = MeshCartesianStatic(dataArray)
+        # Polygon compatibility
+        poly = polygon_regular(4, 1.0)
+        poly.points  # `points` should be an alias for `vertices`
+        @assert poly.points === poly.vertices
 
         #TODO Unitful mesh
     end

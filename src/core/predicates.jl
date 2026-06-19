@@ -17,15 +17,30 @@ function incircle_kernel(a::AbstractPoint2D, b::AbstractPoint2D, c::AbstractPoin
 end
 
 function incircle(a::AbstractPoint2D, b::AbstractPoint2D, c::AbstractPoint2D, d::AbstractPoint2D)
-    result = ustrip(incircle_kernel(a, b, c, d))
+    # result = ustrip(incircle_kernel(a, b, c, d))
 
-    if result < 0
+    # if result < 0
+    #     return Interior()
+    # elseif result > 0
+    #     return Exterior()
+    # end
+
+    # return OnEdge()
+
+    kernel_val = ustrip(incircle_kernel(a, b, c, d))
+    orient_val = ustrip(orient_kernel(a, b, c))
+
+    # Shewchuk convention: ``d`` is inside the circumcircle of CCW
+    # triangle ``(a, b, c)`` when the kernel and orientation have the same
+    # sign. Combining them via multiplication makes the predicate
+    # orientation-independent.
+    if isapprox(kernel_val, 0; atol = eps(typeof(kernel_val)) * 100)
+        return OnEdge()
+    elseif kernel_val * orient_val > 0
         return Interior()
-    elseif result > 0
+    else
         return Exterior()
     end
-
-    return OnEdge()
 end
 
 #TODO inplane of 3D triangle
@@ -80,15 +95,30 @@ function insphere_kernel(a::AbstractPoint3D, b::AbstractPoint3D, c::AbstractPoin
 end
 
 function insphere(a::AbstractPoint3D, b::AbstractPoint3D, c::AbstractPoint3D, d::AbstractPoint3D, e::AbstractPoint3D)
-    result = ustrip(insphere_kernel(a, b, c, d, e))
+    # result = ustrip(insphere_kernel(a, b, c, d, e))
 
-    if result < 0
+    # if result < 0
+    #     return Interior()
+    # elseif result > 0
+    #     return Exterior()
+    # end
+
+    # return OnEdge()
+
+    kernel_val = ustrip(insphere_kernel(a, b, c, d, e))
+    # ``orient_kernel`` returns the negative of the standard determinant
+    # (see ``orient_kernel`` in core/orient.jl), so the Shewchuk sign
+    # convention (kernel and standard orient must agree) is recovered
+    # by flipping it here.
+    orient_val = -ustrip(orient_kernel(a, b, c, d))
+
+    if isapprox(kernel_val, 0; atol = eps(typeof(kernel_val)) * 100)
+        return OnEdge()
+    elseif kernel_val * orient_val > 0
         return Interior()
-    elseif result > 0
+    else
         return Exterior()
     end
-
-    return OnEdge()
 end
 #=
 function insphere_exact(a::AbstractPoint3D, b::AbstractPoint3D, c::AbstractPoint3D, d::AbstractPoint3D, e::AbstractPoint3D)

@@ -1,5 +1,6 @@
 function NGPinfo(meshpos, config, pos::AbstractVector{T}) where T<:Number
-    id = round(Int, (pos .- config.Min) ./ config.Δ) .+ 1 .+ config.NG
+    id = round.(Int, (pos .- config.Min) ./ config.Δ) .+ 1 .+ config.NG
+    return id
 end
 
 function CICinfo(meshpos, config, pos::AbstractVector{T}) where T<:Number
@@ -20,15 +21,14 @@ function CICinfo(meshpos, config, pos::AbstractVector{T}) where T<:Number
 end
 
 function TSCinfo(meshpos, config, pos::AbstractVector{T}) where T<:Number
-    config = mesh.config
-    idl = floor.(Int, (pos .- config.Min) ./ config.Δ .- 0.5) .+ 1 .+ config.NG
+    idl = floor.(Int, (pos .- config.Min) ./ config.Δ .- 0.5) .+ 1 .+ config.NG  #TODO check -0.5
     idm = idl .+ 1
     idr = idm .+ 1
-    
+
     pl = SVector(meshpos[idl...])
-    
-    rl = (pl .- pos .+ 1.5 * config.Δ) .^2 ./ 2 ./ config.Δ ./ config.Δ
-    rr = (pl .- pos .+ 0.5 * config.Δ) .^2 ./ 2 ./ config.Δ ./ config.Δ
+
+    rl = (pl .- pos .+ 1.5 .* config.Δ) .^ 2 ./ 2 ./ config.Δ ./ config.Δ
+    rr = (pl .- pos .+ 0.5 .* config.Δ) .^ 2 ./ 2 ./ config.Δ ./ config.Δ
     rm = 1.0 .- rl .- rr    # assignment ratio of middle vertex
 
     id = [idl, idm, idr]
@@ -36,7 +36,11 @@ function TSCinfo(meshpos, config, pos::AbstractVector{T}) where T<:Number
     return id, r
 end
 
-function is_inbound(pos::PVector, config::MeshConfig)
+"""
+$(TYPEDSIGNATURES)
+Determine whether a 3D position is inside the mesh domain.
+"""
+@inline function is_inbound(pos::PVector, config::MeshConfig)
     if pos.x > config.Max[1] || pos.x < config.Min[1] ||
         pos.y > config.Max[2] || pos.y < config.Min[2] ||
         pos.z > config.Max[3] || pos.z < config.Min[3]
