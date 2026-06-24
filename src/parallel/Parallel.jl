@@ -1,6 +1,5 @@
 include("ParallelBackend.jl")
 include("DistributedMesh.jl")
-include("Partitioning.jl")
 include("Communication.jl")
 
 export
@@ -16,10 +15,6 @@ export
 
     # Mesh / field distribution
     DistributedMesh,
-    PartitioningStrategy,
-    UniformPartitioning,
-    BalancedPartitioning,
-    partition_mesh,
     exchange_boundary_data,
     sync_mesh,
     sync_field

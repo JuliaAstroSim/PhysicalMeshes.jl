@@ -43,11 +43,41 @@ struct Polygon3D{T} <: AbstractPolygon3D{T}
     end
 end
 
+# Compatibility shim: legacy tests and downstream code use
+# `polygon.points` while the canonical field is `polygon.vertices`.
+@inline Base.getproperty(polygon::Polygon2D, name::Symbol) =
+    name === :points ? Base.getfield(polygon, :vertices) : Base.getfield(polygon, name)
+
+@inline Base.getproperty(polygon::Polygon3D, name::Symbol) =
+    name === :points ? Base.getfield(polygon, :vertices) : Base.getfield(polygon, name)
+
+@inline Base.propertynames(::Polygon2D) = (:vertices, :points)
+@inline Base.propertynames(::Polygon3D) = (:vertices, :points)
+
 """
 $(TYPEDSIGNATURES)
 Compute the unit normal vector from the first three vertices
 """
 normal(polygon::Polygon3D) = normal(polygon.vertices[1:3]...)
+
+"""
+$(TYPEDSIGNATURES)
+Compute the unsigned area of a 2D polygon using the shoelace formula.
+The polygon is split into triangles anchored at the first vertex for
+numerical robustness.
+"""
+function area(polygon::Polygon2D)
+    vs = polygon.vertices
+    n = length(vs)
+    n < 3 && return zero(promote_type(typeof(vs[1].x), typeof(vs[1].y)))
+    acc = zero(promote_type(typeof(vs[1].x), typeof(vs[1].y)))
+    @inbounds for i in 2:(n - 1)
+        v1 = vs[i] - vs[1]
+        v2 = vs[i + 1] - vs[1]
+        acc += v1.x * v2.y - v2.x * v1.y
+    end
+    return abs(acc) / 2
+end
 
 """
 $(TYPEDSIGNATURES)
@@ -120,11 +150,61 @@ function is_inbound_ray_casting(pos::PVector2D, polygon::Polygon2D)
     return inside
 end
 
-#TODO ray-casting method for Polygon3D
+"""
+$(TYPEDSIGNATURES)
+Project a 3D point onto the polygon plane and return 2D coordinates in the plane's local coordinate system.
+"""
+function project_to_plane(pos::PVector, polygon::Polygon3D)
+    vertices = polygon.vertices
+    N = normal(polygon)
+    
+    # Create a local coordinate system on the plane
+    # Use the first edge as the x-axis. Use ``/norm`` (rather than
+    # ``normalize``) so the unit vector is truly dimensionless even
+    # for ``Unitful.Quantity`` inputs.
+    v0 = vertices[1]
+    v1 = vertices[2]
+    x_axis = (v1 - v0) / norm(v1 - v0)
+    y_axis = cross(N, x_axis) / norm(cross(N, x_axis))
+
+    # Project point onto the plane
+    v = pos - v0
+    x = dot(v, x_axis)
+    y = dot(v, y_axis)
+
+    return PVector2D(x, y)
+end
+
+"""
+$(TYPEDSIGNATURES)
+Ray casting method for Polygon3D - project to plane then use 2D ray casting.
+"""
+function is_inbound_ray_casting(pos::PVector, polygon::Polygon3D)
+    # First check if the point is on the plane
+    vertices = polygon.vertices
+    N = normal(polygon)
+    v0 = vertices[1]
+    
+    # Distance from point to plane
+    dist = abs(dot(pos - v0, N))
+    threshold = unit(pos.x)^2 * 1e-6
+    if dist > threshold
+        return false
+    end
+    
+    # Project to 2D and use ray casting
+    pos_2d = project_to_plane(pos, polygon)
+    vertices_2d = [project_to_plane(v, polygon) for v in vertices]
+    polygon_2d = Polygon2D(vertices_2d)
+    
+    return is_inbound_ray_casting(pos_2d, polygon_2d)
+end
 
 """
 $(TYPEDSIGNATURES)
 For convex polygons, use cross product method to check whether the point is inside the polygon.
+Points lying on an edge or vertex produce a zero cross product for the
+adjacent edges and are therefore considered "in" the polygon.
 """
 function is_inbound_cross_product(pos, polygon)
     vertices = polygon.vertices
@@ -136,18 +216,41 @@ function is_inbound_cross_product(pos, polygon)
         v2 = vertices[mod1(i+1, n)]
         edge = v2 - v1
         vp = pos - v1
-        if cross_sign == 0
-            cross_sign = sign(dot(cross(edge, vp), N))
-        else
-            if sign(dot(cross(edge, vp), N)) != cross_sign
-                return false
-            end
+        s = sign(dot(cross(edge, vp), N))
+        if s == 0
+            # ``pos`` lies on the edge ``v1 - v2``; the sign test is
+            # uninformative here, so just skip it.
+            continue
+        elseif cross_sign == 0
+            cross_sign = s
+        elseif s != cross_sign
+            return false
         end
     end
     return true
 end
 
-function is_inbound(pos, polygon)
+function is_inbound(pos::PVector2D, polygon::Polygon2D)
+    if isconvex(polygon)
+        return is_inbound_cross_product(pos, polygon)
+    else
+        return is_inbound_ray_casting(pos, polygon)
+    end
+end
+
+function is_inbound(pos::PVector, polygon::Polygon3D)
+    # First, the point must lie on (or very close to) the polygon's plane,
+    # otherwise the 2D-projection based checks below would silently report
+    # the point as being inside a polygon that it is actually not on.
+    vertices = polygon.vertices
+    v0 = vertices[1]
+    N = normal(polygon)
+    dist_to_plane = abs(dot(pos - v0, N))
+    threshold = unit(pos.x)^2 * 1e-6
+    if dist_to_plane > threshold
+        return false
+    end
+
     if isconvex(polygon)
         return is_inbound_cross_product(pos, polygon)
     else
@@ -157,10 +260,33 @@ end
 
 ### Some common polygons
 
-function polygon_rect()
-    
+"""
+$(TYPEDSIGNATURES)
+Create a 2D rectangle polygon centered at origin with given width and height.
+"""
+function polygon_rect(width::T, height::U) where {T, U}
+    w = convert(promote_type(T, U), width) / 2
+    h = convert(promote_type(T, U), height) / 2
+    return Polygon2D([
+        PVector2D(w, h),
+        PVector2D(w, -h),
+        PVector2D(-w, -h),
+        PVector2D(-w, h)
+    ])
 end
 
-function polygon_regular()
-    
+"""
+$(TYPEDSIGNATURES)
+Create a regular n-sided polygon with given circumradius.
+"""
+function polygon_regular(n::Int, radius::T) where T
+    if n < 3
+        error("A polygon must have at least 3 sides")
+    end
+    vertices = PVector2D{typeof(radius)}[]
+    for i in 0:n-1
+        angle = 2π * i / n
+        push!(vertices, PVector2D(radius * cos(angle), radius * sin(angle)))
+    end
+    return Polygon2D(vertices)
 end
