@@ -63,23 +63,58 @@ end
 
 outbound_list(m::MeshCartesianStatic) = CUDA.@allowscalar outbound_list(Array(m.data.Pos), m)
 
+@inline _mesh_index(id, k) = id[k]
+
 function particle2mesh!(meshpos, config, pos::AbstractVector{T}, meshdata, particledata, ::VertexMode, ::NGP) where T<:Number
-    # Find the nearest vertex and assign with particledata
     id = NGPinfo(meshpos, config, pos)
-    meshdata[id...] += particledata
+    # Use only the first `config.dim` entries; data may be a higher-dim array
+    @inbounds meshdata[ntuple(k -> _mesh_index(id, k), config.dim)...] += particledata
 end
 
 function particle2mesh!(meshpos, config, pos::AbstractVector{T}, meshdata, particledata, ::VertexMode, ::CIC) where T<:Number
     id, r = CICinfo(meshpos, config, pos)
-    for i in 1:2, j in 1:2, k in 1:2
-        @inbounds meshdata[id[i][1], id[j][2], id[k][3]] += particledata * r[i][1] * r[j][2] * r[k][3]
-    end
+    _scatter_cic(meshdata, id, r, particledata, Val(config.dim))
 end
 
 function particle2mesh!(meshpos, config, pos::AbstractVector{T}, meshdata, particledata, ::VertexMode, ::TSC) where T<:Number
     id, r = TSCinfo(meshpos, config, pos)
-    for i in 1:3, j in 1:3, k in 1:3
-        @inbounds meshdata[id[i][1], id[j][2], id[k][3]] += particledata * r[i][1] * r[j][2] * r[k][3]
+    _scatter_tsc(meshdata, id, r, particledata, Val(config.dim))
+end
+
+# Dimension-generic scatter helpers
+@inline function _scatter_cic(meshdata, id, r, particledata, ::Val{1})
+    @inbounds for i in 1:2
+        meshdata[id[i][1]] += particledata * r[i][1]
+    end
+end
+
+@inline function _scatter_cic(meshdata, id, r, particledata, ::Val{2})
+    @inbounds for j in 1:2, i in 1:2
+        meshdata[id[i][1], id[j][2]] += particledata * r[i][1] * r[j][2]
+    end
+end
+
+@inline function _scatter_cic(meshdata, id, r, particledata, ::Val{3})
+    @inbounds for k in 1:2, j in 1:2, i in 1:2
+        meshdata[id[i][1], id[j][2], id[k][3]] += particledata * r[i][1] * r[j][2] * r[k][3]
+    end
+end
+
+@inline function _scatter_tsc(meshdata, id, r, particledata, ::Val{1})
+    @inbounds for i in 1:3
+        meshdata[id[i][1]] += particledata * r[i][1]
+    end
+end
+
+@inline function _scatter_tsc(meshdata, id, r, particledata, ::Val{2})
+    @inbounds for j in 1:3, i in 1:3
+        meshdata[id[i][1], id[j][2]] += particledata * r[i][1] * r[j][2]
+    end
+end
+
+@inline function _scatter_tsc(meshdata, id, r, particledata, ::Val{3})
+    @inbounds for k in 1:3, j in 1:3, i in 1:3
+        meshdata[id[i][1], id[j][2], id[k][3]] += particledata * r[i][1] * r[j][2] * r[k][3]
     end
 end
 
@@ -95,46 +130,92 @@ assignmesh(data, m, :Mass, :rho)
 """
 Base.@propagate_inbounds function assignmesh(particles::StructArray, mesh::MeshCartesianStatic, symbolParticle::Symbol, symbolMesh::Symbol)
     config = mesh.config
-    getproperty(mesh, symbolMesh) .*= 0.0
+    meshfield = getproperty(mesh, symbolMesh)
+
+    # Zero out the field, supporting any AbstractField subtype
+    _zero_mesh_field!(meshfield)
 
     CUDA.@allowscalar meshpos = Array(mesh.pos)
-    CUDA.@allowscalar meshdata = Array(getproperty(mesh, symbolMesh))
+    CUDA.@allowscalar meshdata = Array(meshfield.data)
     CUDA.@allowscalar particlepos = Array(particles.Pos)
     CUDA.@allowscalar particledata = Array(getproperty(particles, symbolParticle))
 
-    for i in eachindex(particles)
-        rho = particledata[i] / prod(config.Δ)
+    # Pre-compute the cell-volume normalisation factor once, outside the
+    # particle loop. ``prod(config.Δ)`` was previously re-evaluated per
+    # particle, which the JIT can normally hoist — but only when the
+    # shape and type are known statically. Hoisting it explicitly here
+    # guarantees it and documents the intent.
+    inv_dV = one(eltype(particledata)) / prod(config.Δ)
+
+    @inbounds for i in eachindex(particles)
+        rho = particledata[i] * inv_dV
         if is_inbound(particlepos[i], config)
             pos = SVector(particlepos[i])
             particle2mesh!(meshpos, config, pos, meshdata, rho, config.mode, config.assignment)
         end
     end
 
-    if getproperty(mesh, symbolMesh) isa CuArray
-        getproperty(mesh, symbolMesh) .= cu(meshdata)
+    if meshfield.data isa CuArray
+        meshfield.data .= cu(meshdata)
     else
-        getproperty(mesh, symbolMesh) .= meshdata
+        meshfield.data .= meshdata
     end
 end
 
 assignmesh(m::MeshCartesianStatic) = assignmesh(m.data, m, :Mass, :rho)
 
+"""
+    _zero_mesh_field!(field)
+
+Reset every supported mesh field to zero. Dispatches on the concrete
+`AbstractField` subtype so both scalar and vector fields are handled.
+"""
+@inline _zero_mesh_field!(field::ArrayScalarField) = (field.data .= zero(eltype(field.data)); nothing)
+@inline _zero_mesh_field!(field::ArrayVectorField) = (field.data .= zero(eltype(field.data)); nothing)
+@inline _zero_mesh_field!(field::ArrayTensorField) = (field.data .= zero(eltype(field.data)); nothing)
+@inline _zero_mesh_field!(::Nothing) = nothing
+
 function mesh2particle(meshpos, config, meshdata, pos::AbstractVector{T}, ::VertexMode, ::NGP) where T<:Number
     id = NGPinfo(meshpos, config, pos)
-    return meshdata[id...]
+    return meshdata[ntuple(k -> id[k], config.dim)...]
 end
 
 function mesh2particle(meshpos, config, meshdata, pos::AbstractVector{T}, ::VertexMode, ::CIC) where T<:Number
     id, r = CICinfo(meshpos, config, pos)
-    return sum([meshdata[id[i][1], id[j][2], id[k][3]] * r[i][1] * r[j][2] * r[k][3] for i in 1:2, j in 1:2, k in 1:2])
+    return _gather(meshdata, id, r, Val(config.dim), Val(2))
 end
 
 function mesh2particle(meshpos, config, meshdata, pos::AbstractVector{T}, ::VertexMode, ::TSC) where T<:Number
     id, r = TSCinfo(meshpos, config, pos)
-    return sum([meshdata[id[i][1], id[j][2], id[k][3]] * r[i][1] * r[j][2] * r[k][3] for i in 1:3, j in 1:3, k in 1:3])
+    return _gather(meshdata, id, r, Val(config.dim), Val(3))
+end
+
+@inline function _gather(meshdata, id, r, ::Val{1}, ::Val{n}) where n
+    s = zero(eltype(meshdata))
+    @inbounds for i in 1:n
+        s += meshdata[id[i][1]] * r[i][1]
+    end
+    return s
+end
+
+@inline function _gather(meshdata, id, r, ::Val{2}, ::Val{n}) where n
+    s = zero(eltype(meshdata))
+    @inbounds for j in 1:n, i in 1:n
+        s += meshdata[id[i][1], id[j][2]] * r[i][1] * r[j][2]
+    end
+    return s
+end
+
+@inline function _gather(meshdata, id, r, ::Val{3}, ::Val{n}) where n
+    s = zero(eltype(meshdata))
+    @inbounds for k in 1:n, j in 1:n, i in 1:n
+        s += meshdata[id[i][1], id[j][2], id[k][3]] * r[i][1] * r[j][2] * r[k][3]
+    end
+    return s
 end
 
 mesh2particle(meshpos, config, meshdata, pos::AbstractPoint, args...) = mesh2particle(meshpos, config, meshdata, SVector(pos), args...)
+mesh2particle(meshpos, config, meshdata, pos::AbstractPoint) = mesh2particle(meshpos, config, meshdata, SVector(pos), config.mode, config.assignment)
 
 """
 $(TYPEDSIGNATURES)
@@ -148,9 +229,10 @@ assignparticle(data, m, :Acc, :acc)
 """
 Base.@propagate_inbounds function assignparticle(particles::StructArray, mesh::MeshCartesianStatic, symbolParticle::Symbol, symbolMesh::Symbol)
     config = mesh.config
+    meshfield = getproperty(mesh, symbolMesh)
 
     CUDA.@allowscalar meshpos = Array(mesh.pos)
-    CUDA.@allowscalar meshdata = Array(getproperty(mesh, symbolMesh))
+    CUDA.@allowscalar meshdata = Array(meshfield.data)
     CUDA.@allowscalar particlepos = Array(particles.Pos)
     CUDA.@allowscalar particledata = Array(getproperty(particles, symbolParticle))
 

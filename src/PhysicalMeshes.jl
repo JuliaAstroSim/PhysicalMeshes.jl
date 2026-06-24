@@ -200,9 +200,13 @@ include("Cube.jl")
 include("Triangle.jl")
 include("Tetrahedron.jl")
 
+include("mesh/AbstractMesh.jl")
 include("mesh/Mesh.jl")
 include("mesh/particle2mesh.jl")
 include("mesh/tools.jl")
+
+include("parallel/Parallel.jl")
+# include("algorithms/Algorithms.jl")
 
 include("precompile.jl")
 

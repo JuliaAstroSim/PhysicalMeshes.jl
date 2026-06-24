@@ -203,6 +203,10 @@ function shrink(a::AbstractArray{T,3}, ratio::Int, shift::Int=0) where T
     out
 end
 
+"""
+$(TYPEDSIGNATURES)
+Compute the density-weighted mass center of a Cartesian mesh.
+"""
 function mass_center(m::MeshCartesianStatic)
     rho_total = sum(m.rho)
     if iszero(rho_total)
@@ -212,6 +216,11 @@ function mass_center(m::MeshCartesianStatic)
     end
 end
 
+"""
+$(TYPEDSIGNATURES)
+Compute the total mass of a Cartesian mesh by integrating the density
+field over the cell volume.
+"""
 function total_mass(m::MeshCartesianStatic)
     return sum(m.rho .* prod(m.config.Δ))
 end
