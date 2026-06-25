@@ -29,12 +29,24 @@ end
 @inline Base.firstindex(f::ArrayScalarField, d::Int) = firstindex(f.data, d)
 
 @inline function getindex(f::ArrayVectorField, i...)
-    idx = CartesianIndices(size(f.data)[1:end-1])[i...]
+    n_spatial = ndims(f.data) - 1
+    if length(i) == ndims(f.data)
+        # Caller indexed into the underlying data directly, including the
+        # trailing vector-component dim. This happens in 3D FDTD loops
+        # like `B[i, j, k, 3]` where the user actually wants the raw
+        # scalar at that index, not the vector slice.
+        return f.data[i...]
+    end
+    idx = CartesianIndices(size(f.data)[1:n_spatial])[i...]
     return f.data[idx, :]
 end
 
 @inline function setindex!(f::ArrayVectorField, v, i...)
-    idx = CartesianIndices(size(f.data)[1:end-1])[i...]
+    n_spatial = ndims(f.data) - 1
+    if length(i) == ndims(f.data)
+        return setindex!(f.data, v, i...)
+    end
+    idx = CartesianIndices(size(f.data)[1:n_spatial])[i...]
     f.data[idx, :] .= v
 end
 

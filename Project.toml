@@ -1,6 +1,6 @@
 name = "PhysicalMeshes"
 uuid = "97d9904f-034f-4fb7-aeaa-03a173434233"
-version = "0.1.8"
+version = "0.1.9"
 authors = ["islent <leoislent@gmail.com>"]
 
 [deps]
