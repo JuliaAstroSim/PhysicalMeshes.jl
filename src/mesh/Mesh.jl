@@ -201,13 +201,19 @@ function __MeshCartesianStatic(config::MeshConfig, particles, mode::MeshMode, un
     # inferred even when ``mhd`` is false. For non-MHD simulations the
     # zero-sized arrays are essentially free; the test suite expects
     # ``B/E/rho_e/j`` to be present (but not used) in all meshes.
-    _vec_zero = ArrayVectorField(T, field_dims, max(config.dim, 1))
+    #
+    # The trailing vector dim must be 3 for *any* EM field (B, E, j):
+    # FDTD.jl hardcodes component indices up to 3 in its update loops,
+    # and a 2D `dim=2` mesh still needs the perpendicular component for
+    # the in-plane curl terms. So we use `max(config.dim, 3)` rather
+    # than `max(config.dim, 1)` even for non-MHD placeholder vectors.
+    _vec_zero = ArrayVectorField(T, field_dims, max(config.dim, 3))
     _scalar_zero = ArrayScalarField(T, field_dims)
     if mhd
-        B = ArrayVectorField(T, field_dims, config.dim)
-        E = ArrayVectorField(T, field_dims, config.dim)
+        B = ArrayVectorField(T, field_dims, max(config.dim, 3))
+        E = ArrayVectorField(T, field_dims, max(config.dim, 3))
         rho_e = ArrayScalarField(T, field_dims)
-        j = ArrayVectorField(T, field_dims, config.dim)
+        j = ArrayVectorField(T, field_dims, max(config.dim, 3))
     else
         B = _vec_zero
         E = _vec_zero

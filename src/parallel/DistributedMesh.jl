@@ -101,7 +101,17 @@ function calculate_local_config(config::MeshConfig, rank::Int, size::Int)
         local_N = SVector(local_Nx, local_Ny, local_Nz)
     end
 
-    # Create local config
+    # Create local config. The constructor's positional ``Δ/Min/Max``
+    # share a single type parameter ``V``, so we have to coerce the
+    # local-Min/Max SVectors to match the type of the input ``Δ``
+    # (which is `Vector{Float64}` for unitless configs). Otherwise the
+    # struct constructor raises a `MethodError` on dispatch.
+    Δ_local = Vector{Float64}([local_Min[i] - Min[i] for i in 1:dim])
+    Min_local = Vector{Float64}([local_Min[i] for i in 1:dim])
+    Max_local = Vector{Float64}([local_Max[i] for i in 1:dim])
+    N_local = Vector{Int}([local_N[i] for i in 1:dim])
+    Len_local = N_local .+ 2 * config.NG
+
     return MeshConfig(
         config.mode,
         config.assignment,
@@ -111,11 +121,11 @@ function calculate_local_config(config::MeshConfig, rank::Int, size::Int)
         config.units,
         config.dim,
         config.NG,
-        Δ,
-        local_Min,
-        local_Max,
-        local_N,
-        local_N .+ 2 * config.NG
+        Δ_local,
+        Min_local,
+        Max_local,
+        N_local,
+        Len_local,
     )
 end
 

@@ -347,3 +347,63 @@ end
     @test occursin("dim:", sc)
     @test occursin("Number of Vertices:", sc)
 end
+
+@testset "MeshCartesianStatic Array constructor (legacy path)" begin
+    # `MeshCartesianStatic(particles::Array, ...)` wraps the input in
+    # a StructArray before delegating to the StructArray constructor.
+    # We exercise that path with a plain `Vector{Ball}`.
+    pos = [
+        PVector(0.0, 0.0, 0.0),
+        PVector(0.5, 0.5, 0.5),
+        PVector(0.3, 0.3, 0.3),
+    ]
+    dataArray = [Ball() for _ in 1:length(pos)]
+    assign_particles(dataArray, :Pos, pos)
+    assign_particles(dataArray, :Mass, 1.0)
+
+    m = MeshCartesianStatic(dataArray; Nx=4, Ny=4, Nz=4, dim=3,
+                            xMin=0.0, xMax=1.0, NG=0, enlarge=1.0)
+    @test m isa MeshCartesianStatic
+    @test m.data isa StructArray
+    @test length(m.data) == length(pos)
+end
+
+@testset "assignmesh single-argument form" begin
+    # `assignmesh(m::MeshCartesianStatic)` is shorthand for
+    # `assignmesh(m.data, m, :Mass, :rho)` (see particle2mesh.jl:168).
+    # Use multiple particles with non-coincident positions so the auto
+    # extent (`extent(particles) * enlarge`) is non-zero — otherwise
+    # the in-construction `assignmesh` call would have a degenerate
+    # domain.
+    pos = [PVector(0.3, 0.3, 0.3), PVector(0.7, 0.7, 0.7)]
+    data = StructArray([Ball() for _ in 1:2])
+    assign_particles(data, :Pos, pos)
+    assign_particles(data, :Mass, 1.0)
+    m = MeshCartesianStatic(data; Nx=4, Ny=4, Nz=4, dim=3, NG=0,
+                            assignment=NGP(),
+                            xMin=0.0, xMax=1.0, yMin=0.0, yMax=1.0,
+                            zMin=0.0, zMax=1.0, cube=false)
+    # Zero rho then call the single-arg form.
+    m.rho.data .= 0.0
+    @test_nowarn assignmesh(m)
+    @test sum(m.rho.data) > 0
+end
+
+@testset "mesh_dimension: AbstractMesh fallback returns config.dim" begin
+    # The fallback in AbstractMesh.jl:98 returns mesh.config.dim when
+    # the concrete subtype doesn't override the dispatch.
+    m = MeshCartesianStatic(; Nx=4, Ny=4, Nz=4, dim=3)
+    @test PhysicalMeshes.mesh_dimension(m) == 3
+    m2 = MeshCartesianStatic(; Nx=4, Ny=4, dim=2)
+    @test PhysicalMeshes.mesh_dimension(m2) == 2
+    m3 = MeshCartesianStatic(; Nx=4, dim=1)
+    @test PhysicalMeshes.mesh_dimension(m3) == 1
+end
+
+@testset "Line2D: arithmetic with negative coordinates" begin
+    # Regression test for the previously uncovered negative-coordinate
+    # arithmetic path on `Line2D`.
+    l = Line2D(PVector2D(-1.0, -2.0), PVector2D(2.0, 3.0))
+    @test midpoint(l) == PVector2D(0.5, 0.5)
+    @test 2 * l == Line2D(PVector2D(-2.0, -4.0), PVector2D(4.0, 6.0))
+end
