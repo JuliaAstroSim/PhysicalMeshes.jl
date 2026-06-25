@@ -41,13 +41,16 @@ $(TYPEDSIGNATURES)
 Determine whether a 3D position is inside the mesh domain.
 """
 @inline function is_inbound(pos::PVector, config::MeshConfig)
-    if pos.x > config.Max[1] || pos.x < config.Min[1] ||
-        pos.y > config.Max[2] || pos.y < config.Min[2] ||
-        pos.z > config.Max[3] || pos.z < config.Min[3]
-        return false
-    else
-        return true
+    # Iterate over the mesh's actual dimensionality. The previous version
+    # unconditionally read `config.Max[1..3]`, which BoundsError'd for a
+    # 1D or 2D `MeshConfig` (where `Max` has length 1 or 2).
+    @inbounds for i in eachindex(config.Min)
+        coord = i == 1 ? pos.x : i == 2 ? pos.y : pos.z
+        if coord > config.Max[i] || coord < config.Min[i]
+            return false
+        end
     end
+    return true
 end
 
 function outbound_list(pos::AbstractArray, m::MeshCartesianStatic)
