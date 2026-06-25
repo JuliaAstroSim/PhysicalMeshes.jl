@@ -10,7 +10,7 @@ using StaticArrays
 using StructArrays
 using DocStringExtensions
 using FFTW
-using Statistics
+using Statistics, StatsBase
 using ParallelOperations
 
 using PhysicalParticles
@@ -32,6 +32,7 @@ import Base: ndims, axes, eltype
 import Unitful: Units, FloatTypes
 #import Decimals: Decimal, decimal
 import PhysicalParticles: PVector2D, PVector, area, volume, mass_center
+import PhysicalParticles: distance
 import AstroSimBase: BoundaryCondition, Periodic, Dirichlet, Vacuum, CPU, GPU, DeviceType, traitstring
 
 export
