@@ -23,6 +23,10 @@ end
 @inline axes(f::ArrayScalarField, d::Int) = axes(f.data, d)
 @inline eltype(f::ArrayScalarField{T}) where T = T
 @inline eltype(::Type{ArrayScalarField{T,A}}) where {T,A} = T
+@inline Base.lastindex(f::ArrayScalarField) = lastindex(f.data)
+@inline Base.lastindex(f::ArrayScalarField, d::Int) = lastindex(f.data, d)
+@inline Base.firstindex(f::ArrayScalarField) = firstindex(f.data)
+@inline Base.firstindex(f::ArrayScalarField, d::Int) = firstindex(f.data, d)
 
 @inline function getindex(f::ArrayVectorField, i...)
     idx = CartesianIndices(size(f.data)[1:end-1])[i...]
@@ -43,6 +47,13 @@ end
 @inline axes(f::ArrayVectorField, d::Int) = axes(f.data, d)
 @inline eltype(f::ArrayVectorField{T}) where T = T
 @inline eltype(::Type{ArrayVectorField{T,A}}) where {T,A} = T
+# lastindex/firstindex for ArrayVectorField: spatial dims only (vector dim stripped)
+# `f[end]` must resolve to the last *spatial* element; `f.data` has an extra
+# trailing dim holding the vector components.
+@inline Base.lastindex(f::ArrayVectorField) = length(f)
+@inline Base.lastindex(f::ArrayVectorField, d::Int) = size(f.data, d)
+@inline Base.firstindex(f::ArrayVectorField) = 1
+@inline Base.firstindex(f::ArrayVectorField, d::Int) = 1
 
 @inline function getindex(f::ArrayTensorField, i...)
     idx = CartesianIndices(size(f.data)[1:end-2])[i...]
@@ -63,6 +74,12 @@ end
 @inline axes(f::ArrayTensorField, d::Int) = axes(f.data, d)
 @inline eltype(f::ArrayTensorField{T}) where T = T
 @inline eltype(::Type{ArrayTensorField{T,A}}) where {T,A} = T
+# lastindex/firstindex for ArrayTensorField: spatial dims only (last two trailing
+# dims hold the (dim x dim) tensor components and are not exposed by indexing).
+@inline Base.lastindex(f::ArrayTensorField) = length(f)
+@inline Base.lastindex(f::ArrayTensorField, d::Int) = size(f.data, d)
+@inline Base.firstindex(f::ArrayTensorField) = 1
+@inline Base.firstindex(f::ArrayTensorField, d::Int) = 1
 
 function ArrayScalarField(::Type{T}, dims::NTuple{N, Int}) where {T, N}
     data = zeros(T, dims)
