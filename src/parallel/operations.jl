@@ -108,9 +108,9 @@ computed for diagnostic radii.
 """
 function parallel_quantile(values::AbstractArray, weights::AbstractArray, qs, b::ParallelBackend)
     if b.kind === :distributed
-        return Statistics.quantile(collect(values[:]), Statistics.weights(collect(weights[:])), qs)
+        return Statistics.quantile(collect(values[:]), StatsBase.weights(collect(weights[:])), qs)
     else
-        return Statistics.quantile(values, Statistics.weights(weights), qs)
+        return Statistics.quantile(values, StatsBase.weights(weights), qs)
     end
 end
 

@@ -129,6 +129,14 @@ end
     return f
 end
 
+# Broadcast destination for slice assignment `f[I...] .= value`:
+# `getindex` returns a (possibly copied) value, so without `dotview` the
+# broadcast would write into the copy and the slice assignment would be
+# a silent no-op on `f.data`. Forward to a real `view` of `f.data` so
+# `m.phi[2:end-1, ...] .= rhs` (the pattern used in PhysicalFFT.jl:342)
+# actually updates `m.phi.data`.
+@inline Base.Broadcast.dotview(f::ArrayScalarField, i...) = Base.view(f.data, i...)
+
 # broadcastable: let broadcast use the underlying data array
 @inline Base.broadcastable(f::ArrayScalarField) = f.data
 @inline Base.broadcastable(f::ArrayVectorField) = f.data
