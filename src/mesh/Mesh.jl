@@ -193,9 +193,28 @@ function __MeshCartesianStatic(config::MeshConfig, particles, mode::MeshMode, un
     # size (``Len`` per axis).
     T = eltype(ustrip(config.Δ[1]))
     field_dims = mode isa VertexMode ? tuple((config.Len .+ 1)...) : tuple(config.Len...)
-    e = ArrayScalarField(T, field_dims)
-    rho = ArrayScalarField(T, field_dims)
-    phi = ArrayScalarField(T, field_dims)
+    # When ``units`` is supplied, allocate the unitful scalar fields
+    # (``e`` = energy density, ``rho`` = mass density, ``phi`` = potential)
+    # with explicit Quantity eltypes so callers can broadcast unitful
+    # assignments such as ``m.rho .= 0.0u"Msun/kpc^3"``. When ``units`` is
+    # ``nothing``, the legacy dimensionless Float64 storage is used (the
+    # PIC/FFT/FDTD unitless test suite assigns plain numeric values).
+    if units === nothing
+        e = ArrayScalarField(T, field_dims)
+        rho = ArrayScalarField(T, field_dims)
+        phi = ArrayScalarField(T, field_dims)
+    else
+        # Reuse ``zv`` so we stay consistent with the unit system used
+        # for pos/vel/acc. ``zv.density`` is in mass-density units, and
+        # ``zv.potpermass`` is in gravitational-potential-per-unit-mass
+        # units (so ``∇φ`` yields the right acceleration). ``rho_e``
+        # (charge density) is allocated with the same unitful type as
+        # ``rho`` because the MeshCartesianStatic struct ties the two
+        # fields to a single ``RHOFIELD`` type parameter.
+        rho = ArrayScalarField(fill(zv.density, field_dims))
+        e   = ArrayScalarField(fill(zv.potpermass, field_dims))
+        phi = ArrayScalarField(fill(zv.potpermass, field_dims))
+    end
 
     # Always allocate MHD fields so the struct's type parameters can be
     # inferred even when ``mhd`` is false. For non-MHD simulations the
@@ -208,7 +227,11 @@ function __MeshCartesianStatic(config::MeshConfig, particles, mode::MeshMode, un
     # the in-plane curl terms. So we use `max(config.dim, 3)` rather
     # than `max(config.dim, 1)` even for non-MHD placeholder vectors.
     _vec_zero = ArrayVectorField(T, field_dims, max(config.dim, 3))
-    _scalar_zero = ArrayScalarField(T, field_dims)
+    # ``rho_e`` is bound to ``rho`` (same RHOFIELD type parameter). When
+    # ``rho`` is unitful we must allocate ``rho_e`` with the matching
+    # unitful eltype, otherwise the struct constructor will reject the
+    # call with a MethodError.
+    _scalar_zero = units === nothing ? ArrayScalarField(T, field_dims) : rho
     if mhd
         B = ArrayVectorField(T, field_dims, max(config.dim, 3))
         E = ArrayVectorField(T, field_dims, max(config.dim, 3))

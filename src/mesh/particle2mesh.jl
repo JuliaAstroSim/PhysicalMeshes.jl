@@ -235,7 +235,13 @@ Base.@propagate_inbounds function assignparticle(particles::StructArray, mesh::M
     meshfield = getproperty(mesh, symbolMesh)
 
     CUDA.@allowscalar meshpos = Array(mesh.pos)
-    CUDA.@allowscalar meshdata = Array(meshfield.data)
+    # ``meshfield`` can be either a ``StructArray``-wrapped vector
+    # field (``acc``, ``pos``, ``vel``) or a scalar / vector / tensor
+    # field with a ``.data`` attribute (``rho``, ``phi``, ``e``, ...).
+    # Use ``_field_data`` to extract the underlying storage uniformly.
+    _field_data(meshfield) =
+        meshfield isa Union{ArrayScalarField, ArrayVectorField, ArrayTensorField} ? meshfield.data : meshfield
+    CUDA.@allowscalar meshdata = Array(_field_data(meshfield))
     CUDA.@allowscalar particlepos = Array(particles.Pos)
     CUDA.@allowscalar particledata = Array(getproperty(particles, symbolParticle))
 

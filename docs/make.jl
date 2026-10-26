@@ -9,6 +9,9 @@ GitHub Action (see `.github/workflows/ManuallyBuildDoc.yml`).
 using Documenter
 
 using PhysicalMeshes
+using PhysicalParticles
+using Unitful, UnitfulAstro
+using Interpolations
 
 # The DOCSARGS environment variable can be used to pass additional arguments to make.jl.
 # This is useful on CI, if you need to change the behavior of the build slightly but you
@@ -33,15 +36,27 @@ makedocs(
     sitename = "PhysicalMeshes.jl",
     authors = "islent",
     linkcheck = !("skiplinks" in ARGS),
+    strict = false,
     pages = [
         "Home" => "index.md",
         "Manual" => Any[
-            "manual/guide.md",
-            "manual/Triangle.md",
-            "manual/Line.md",
-            "manual/Cube.md",
-            "manual/Tetrahedron.md",
-            "manual/MeshCartesianStatic.md",
+            "Overview"      => "manual/guide.md",
+            "Geometry"      => Any[
+                "manual/Line.md",
+                "manual/Plane.md",
+                "manual/Polygon.md",
+                "manual/Triangle.md",
+                "manual/Cube.md",
+                "manual/Tetrahedron.md",
+                "manual/Sphere.md",
+                "manual/Ray.md",
+            ],
+            "Meshes"        => Any[
+                "manual/MeshCartesianStatic.md",
+                "manual/Distributed-Mesh.md",
+            ],
+            "Algorithms"    => "manual/Algorithms.md",
+            "Parallel"      => "manual/Parallel.md",
         ],
         "Library" => Any[
             "lib/Methods.md",
